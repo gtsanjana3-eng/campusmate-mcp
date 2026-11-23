@@ -35,6 +35,21 @@ describe('apiRequest', () => {
     await expect(apiRequest('/things/1', { method: 'DELETE' })).resolves.toBeUndefined();
   });
 
+  it('uses the server error message and code when the body is the API error shape', async () => {
+    mockFetch(
+      Response.json(
+        { error: { code: 'ability_disabled', message: 'The student turned this off.' } },
+        { status: 403 },
+      ),
+    );
+    const error = await apiRequest('/api/x').catch((e: unknown) => e);
+    expect(error).toMatchObject({
+      status: 403,
+      code: 'ability_disabled',
+      message: 'The student turned this off.',
+    });
+  });
+
   it('throws ApiError with the status for non-2xx responses', async () => {
     mockFetch(new Response('Not found', { status: 404, statusText: 'Not Found' }));
     const error = await apiRequest('/missing').catch((e: unknown) => e);

@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
-import type { RouteObject } from 'react-router';
+import { Navigate, type RouteObject } from 'react-router';
 import { ROUTES } from '@/config/routes';
+import { AuthGate } from '@/layouts/AuthGate';
 import { MainLayout } from '@/layouts/MainLayout';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { RouteErrorPage } from '@/pages/RouteErrorPage';
@@ -21,8 +22,16 @@ export const routes: RouteObject[] = [
         // Errors inside a page render here, keeping the header and footer visible.
         ErrorBoundary: RouteErrorPage,
         children: [
-          { path: ROUTES.home, lazy: page(() => import('@/pages/HomePage')) },
-          { path: ROUTES.items, lazy: page(() => import('@/pages/ItemsPage')) },
+          { path: ROUTES.login, lazy: page(() => import('@/pages/LoginPage')) },
+          {
+            // Every route below needs a logged-in student.
+            Component: AuthGate,
+            children: [
+              // Until the Today page exists, the home route opens Connect.
+              { path: ROUTES.home, element: <Navigate to={ROUTES.connect} replace /> },
+              { path: ROUTES.connect, lazy: page(() => import('@/pages/ConnectPage')) },
+            ],
+          },
           // Not lazy: the error page renders it too, so it's in the main bundle anyway.
           { path: '*', Component: NotFoundPage },
         ],

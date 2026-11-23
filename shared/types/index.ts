@@ -150,6 +150,16 @@ export interface SessionRequest {
   passcode: string;
 }
 
+/** GET /api/session — lets the dashboard check whether its cookie is still valid. */
+export interface SessionStatusResponse {
+  authenticated: true;
+}
+
+export interface HealthResponse {
+  status: 'ok' | 'error';
+  db: 'ok' | 'down';
+}
+
 export interface TodayResponse {
   date: string;
   classes: ClassSession[];

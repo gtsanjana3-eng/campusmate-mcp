@@ -4,18 +4,24 @@ import { createMcpHandler } from '@modelcontextprotocol/server';
 import { Hono, type Context } from 'hono';
 import { secureHeaders } from 'hono/secure-headers';
 import type { ApiErrorBody } from '../../shared/types/index.ts';
+import { createApiRoutes } from './api/routes.ts';
 import { bearerAuth } from './auth/bearer.ts';
 import type { Env } from './config/env.ts';
+import type { Store } from './data/store.ts';
+import { AppError } from './domain/errors.ts';
+import { log } from './lib/logger.ts';
 import { createMcpServer } from './mcp/createServer.ts';
 
 type AppOptions = {
+  store: Store;
   /** Folder with the built dashboard, relative to the process working directory. Omit in tests. */
   webDist?: string;
 };
 
 const apiError = (code: string, message: string): ApiErrorBody => ({ error: { code, message } });
 
-export function createApp(env: Env, options: AppOptions = {}) {
+export function createApp(env: Env, options: AppOptions) {
+  const { store } = options;
   const app = new Hono();
 
   app.use(
@@ -38,13 +44,13 @@ export function createApp(env: Env, options: AppOptions = {}) {
     host: '0.0.0.0',
     allowedHosts: [new URL(env.PUBLIC_URL).hostname, 'localhost', '127.0.0.1'],
   });
-  const handler = createMcpHandler(createMcpServer);
+  const handler = createMcpHandler(() => createMcpServer({ store }));
   mcp.use('*', bearerAuth(env.MCP_TOKEN));
   mcp.all('/', (c: Context) => handler.fetch(c.req.raw, { parsedBody: c.get('parsedBody') }));
   app.route('/mcp', mcp);
 
-  // --- REST API: only the dashboard talks to this (session auth arrives in Phase 8) ---
-  app.get('/api/health', (c) => c.json({ status: 'ok' }));
+  // --- REST API: only the dashboard talks to this, with the session cookie ---
+  app.route('/api', createApiRoutes(env, store));
   app.all('/api/*', (c) => c.json(apiError('not_found', 'No such API route.'), 404));
 
   // --- Dashboard: static files with SPA fallback ---
@@ -54,7 +60,8 @@ export function createApp(env: Env, options: AppOptions = {}) {
   }
 
   app.onError((error, c) => {
-    console.error(error);
+    if (error instanceof AppError) return c.json(apiError(error.code, error.message), error.status);
+    log.error('http.unhandled', error, { method: c.req.method, path: c.req.path });
     return c.json(apiError('internal', 'Something went wrong.'), 500);
   });
 

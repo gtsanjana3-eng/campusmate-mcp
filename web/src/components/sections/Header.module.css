@@ -63,6 +63,14 @@
   border-radius: var(--radius-md);
 }
 
+/* The log-out button looks like a nav link. */
+button.link {
+  width: 100%;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
 .link:hover {
   color: var(--color-text);
   background: var(--color-surface);

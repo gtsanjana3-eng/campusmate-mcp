@@ -1,0 +1,33 @@
+.page {
+  max-width: 48rem;
+}
+
+.heading {
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-2);
+}
+
+.lead {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-8);
+}
+
+.steps {
+  display: grid;
+  gap: var(--space-6);
+  padding-left: var(--space-6);
+}
+
+.step {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.stepTitle {
+  font-size: var(--text-lg);
+}
+
+.note {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}

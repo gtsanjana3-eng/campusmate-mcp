@@ -1,15 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { createApp } from './app.ts';
 import { parseEnv } from './config/env.ts';
+import { TEST_TOKEN as TOKEN, testApp, testEnv as env } from './test/helpers.ts';
 
-const TOKEN = 't'.repeat(40);
-const env = parseEnv({
-  MCP_TOKEN: TOKEN,
-  DASHBOARD_PASSCODE: 'letmein',
-  SESSION_SECRET: 's'.repeat(40),
-  PUBLIC_URL: 'https://campusmate.example.com',
-});
-const app = createApp(env);
+const { app } = testApp();
 
 const initialize = {
   jsonrpc: '2.0',
@@ -69,7 +62,7 @@ describe('REST boundary', () => {
   it('answers the health check', async () => {
     const response = await app.request('/api/health');
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ status: 'ok' });
+    expect(await response.json()).toEqual({ status: 'ok', db: 'ok' });
   });
 
   it('returns a JSON 404 for unknown API routes', async () => {
