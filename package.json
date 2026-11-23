@@ -8,7 +8,9 @@
     "server"
   ],
   "scripts": {
+    "dev:server": "npm run dev -w server",
     "dev:web": "npm run dev -w web",
+    "start": "npm run start -w server",
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

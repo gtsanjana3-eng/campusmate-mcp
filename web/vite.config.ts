@@ -11,6 +11,13 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  // In development the dashboard runs on Vite; API and MCP calls go to the server (npm run dev:server).
+  server: {
+    proxy: {
+      '/api': 'http://localhost:8787',
+      '/mcp': 'http://localhost:8787',
+    },
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],

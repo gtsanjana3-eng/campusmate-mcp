@@ -1,2 +1,3 @@
-export const SITE_NAME = 'Site Name';
-export const SITE_DESCRIPTION = 'A short description of the site.';
+export const SITE_NAME = 'CampusMate';
+export const SITE_DESCRIPTION =
+  'Your college life in your AI assistant: timetable, deadlines, attendance and notices, with every action approved by you.';

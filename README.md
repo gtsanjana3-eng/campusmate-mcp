@@ -4,9 +4,9 @@
 
 wHACKiest 2026 · Track 1: Make MCP Matter
 
-> **Status: Stage A (foundation).** The repository structure, API contract and architecture are in
-> place. The MCP server and dashboard are being built next (see [Roadmap](#roadmap)). Nothing below
-> marked _planned_ works yet.
+> **Status: foundation.** The server runs: it answers the MCP handshake (bearer token required),
+> serves `/api/health` and hosts the dashboard. No MCP tools or dashboard pages exist yet; they are
+> built next (see [Roadmap](#roadmap)). Anything marked _planned_ doesn't work yet.
 
 ## The problem
 
@@ -33,7 +33,7 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 ```
 campusmate-mcp/
 ├── shared/types/   API contract shared by server and dashboard (@shared/types)
-├── server/         MCP server, REST API and static host (planned: Hono + official MCP SDK v2)
+├── server/         MCP server, REST API and static host (Hono + official MCP SDK v2)
 ├── web/            Dashboard (React 19 + Vite 8, from our frontend template)
 └── docs/           architecture.md, demo-script.md
 ```
@@ -44,11 +44,21 @@ Requires **Node 24+**.
 
 ```bash
 npm install
-npm run check      # lint, format check, typecheck, tests, build (all workspaces)
-npm run dev:web    # dashboard dev server at http://localhost:5173
+cp .env.example .env   # then replace every placeholder (see the comment at the top for generating secrets)
+npm run check          # lint, format check, typecheck, tests, build (all workspaces)
 ```
 
-Copy `.env.example` to `.env` before running the server (planned). Never commit `.env`.
+Never commit `.env`. The server refuses to start if a secret is missing or too short.
+
+| Command              | What it does                                                                           |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| `npm run dev:server` | Server with auto-restart at http://localhost:8787 (MCP at `/mcp`)                      |
+| `npm run dev:web`    | Dashboard dev server at http://localhost:5173; proxies `/api` and `/mcp` to the server |
+| `npm run build`      | Builds the dashboard into `web/dist`                                                   |
+| `npm start`          | Production: one process serves the dashboard, `/api` and `/mcp`                        |
+
+The server runs its TypeScript sources directly on Node 24, so it has no build step; `tsc` only
+type-checks.
 
 ## Roadmap
 
