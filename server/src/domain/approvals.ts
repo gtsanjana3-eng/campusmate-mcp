@@ -36,8 +36,10 @@ function toPendingAction(record: PendingActionRecord): PendingAction {
     id: record.id,
     status: record.status,
     reason: record.reason,
+    summary: describe(record.preview),
     preview: record.preview,
     createdAt: record.createdAt,
+    expiresAt: new Date(Date.parse(record.createdAt) + EXPIRY_MS).toISOString(),
     ...(record.decidedAt ? { decidedAt: record.decidedAt } : {}),
     ...(typeof error === 'string' ? { error } : {}),
   };

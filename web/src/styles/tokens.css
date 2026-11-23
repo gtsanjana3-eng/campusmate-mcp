@@ -21,6 +21,11 @@
   /* Color: feedback */
   --color-danger: #b42318;
   --color-danger-bg: #fef3f2;
+  --color-success: #067647;
+  --color-success-bg: #ecfdf3;
+  --color-warning: #93370d;
+  --color-warning-bg: #fffaeb;
+  --color-info-bg: #eef4ff;
   --color-focus: #2952cc;
 
   /* Typography */

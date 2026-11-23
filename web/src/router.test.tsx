@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -80,13 +80,20 @@ const loggedInApi = () =>
   });
 
 describe('logged in', () => {
-  it('opens Connect from the home route inside the shared layout', async () => {
+  it('opens Today from the home route, with every page in the navigation', async () => {
     loggedInApi();
-    const router = renderAt('/');
+    renderAt('/');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Today' })).toBeInTheDocument();
+    const nav = screen.getByRole('navigation', { name: 'Primary' });
     expect(
-      await screen.findByRole('heading', { name: 'Connect CampusMate to your AI assistant' }),
-    ).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/connect');
+      within(nav)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['Today', 'Approvals', 'Activity', 'Permissions', 'Connect']);
+    expect(within(nav).getByRole('link', { name: 'Today' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
     expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveAttribute('href', '#main');
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
   });

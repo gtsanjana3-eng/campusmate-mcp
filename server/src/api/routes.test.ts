@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { AbilitiesResponse, AbilityResponse } from '../../../shared/types/index.ts';
+import type {
+  AbilitiesResponse,
+  AbilityResponse,
+  AttendanceResponse,
+  TodayResponse,
+} from '../../../shared/types/index.ts';
 import { login, TEST_HOST, TEST_TOKEN, testApp } from '../test/helpers.ts';
 
 const json = (body: unknown) => ({
@@ -65,13 +70,18 @@ describe('session API', () => {
 });
 
 describe('protected routes', () => {
-  it.each(['/api/session', '/api/abilities', '/api/activity', '/api/connect'])(
-    '%s needs a session',
-    async (path) => {
-      const { app } = testApp();
-      expect((await app.request(path)).status).toBe(401);
-    },
-  );
+  it.each([
+    '/api/session',
+    '/api/today',
+    '/api/attendance',
+    '/api/approvals',
+    '/api/abilities',
+    '/api/activity',
+    '/api/connect',
+  ])('%s needs a session', async (path) => {
+    const { app } = testApp();
+    expect((await app.request(path)).status).toBe(401);
+  });
 
   it('does not accept the MCP bearer token in place of a session', async () => {
     const { app } = testApp();
@@ -134,5 +144,27 @@ describe('activity API', () => {
     const response = await app.request('/api/activity?limit=5', { headers: { Cookie: cookie } });
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ entries: [] });
+  });
+});
+
+describe('today and attendance API', () => {
+  it('returns the same day view the MCP tools use, plus the pending count', async () => {
+    const { app } = testApp();
+    const cookie = await login(app);
+    const response = await app.request('/api/today', { headers: { Cookie: cookie } });
+    const body = (await response.json()) as TodayResponse;
+    expect(body).toMatchObject({ date: '2026-11-24', pendingCount: 0 });
+    expect(body.classes.map((c) => c.subjectCode)).toEqual(['OS', 'SE', 'ML', 'PE']);
+    expect(body.dueSoon.map((d) => d.id)).toEqual(['dl-cn-quiz', 'dl-dbms-er']);
+  });
+
+  it('returns attendance for every subject with exact canMiss / mustAttend', async () => {
+    const { app } = testApp();
+    const cookie = await login(app);
+    const response = await app.request('/api/attendance', { headers: { Cookie: cookie } });
+    const body = (await response.json()) as AttendanceResponse;
+    expect(body.minimumPercent).toBe(75);
+    expect(body.subjects.find((s) => s.subjectCode === 'OS')).toMatchObject({ canMiss: 1 });
+    expect(body.subjects.find((s) => s.subjectCode === 'CN')).toMatchObject({ mustAttend: 6 });
   });
 });

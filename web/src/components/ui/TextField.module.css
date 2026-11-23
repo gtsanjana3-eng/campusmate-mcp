@@ -16,6 +16,12 @@
   border-radius: var(--radius-md);
 }
 
+.multiline {
+  min-height: 10rem;
+  resize: vertical;
+  line-height: var(--leading-normal);
+}
+
 .input[aria-invalid='true'] {
   border-color: var(--color-danger);
 }

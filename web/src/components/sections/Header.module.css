@@ -63,6 +63,20 @@
   border-radius: var(--radius-md);
 }
 
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  margin-left: var(--space-2);
+  padding-inline: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+  border-radius: 999px;
+}
+
 /* The log-out button looks like a nav link. */
 button.link {
   width: 100%;

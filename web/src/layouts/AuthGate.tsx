@@ -1,8 +1,10 @@
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { StatusMessage } from '@/components/ui/StatusMessage';
 import { ROUTES } from '@/config/routes';
+import { DEMO_NOTICE } from '@/config/site';
 import { useAsync } from '@/hooks/useAsync';
 import { isLoggedIn } from '@/services/sessionService';
+import styles from './AuthGate.module.css';
 
 /** Renders its child routes only for a logged-in student; otherwise sends them to log in. */
 export function AuthGate() {
@@ -28,5 +30,12 @@ export function AuthGate() {
   if (!session.data) {
     return <Navigate to={ROUTES.login} replace state={{ from: location.pathname }} />;
   }
-  return <Outlet />;
+  return (
+    <>
+      <p className={`container ${styles.demo}`}>
+        <strong>Demo</strong> {DEMO_NOTICE}
+      </p>
+      <Outlet />
+    </>
+  );
 }

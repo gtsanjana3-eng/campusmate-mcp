@@ -6,7 +6,9 @@ import type {
   ActionResponse,
   ActivityResponse,
   ApprovalsResponse,
+  AttendanceResponse,
   ConnectResponse,
+  TodayResponse,
 } from '../../../shared/types/index.ts';
 import {
   endSession,
@@ -18,6 +20,7 @@ import {
 import type { Env } from '../config/env.ts';
 import type { Store } from '../data/store.ts';
 import { listAbilities, setAbility } from '../domain/abilities.ts';
+import { attendanceMinimum, getAttendance, getToday } from '../domain/academic.ts';
 import { listActivity } from '../domain/activity.ts';
 import { approveAction, editEmailDraft, listActions, rejectAction } from '../domain/approvals.ts';
 import { unauthorized, validationError } from '../domain/errors.ts';
@@ -71,6 +74,20 @@ export function createApiRoutes(env: Env, { store, mailer, now }: ApiDeps) {
 
   // Everything below needs a logged-in student.
   api.get('/session', session, (c) => c.json({ authenticated: true }));
+
+  // The dashboard reads the same data the MCP tools use, through the same domain functions.
+  api.get('/today', session, (c) => {
+    const { date, classes, dueSoon, attendanceAlerts } = getToday(store, now());
+    const pendingCount = listActions(store, 'pending', now()).length;
+    return c.json<TodayResponse>({ date, classes, dueSoon, attendanceAlerts, pendingCount });
+  });
+
+  api.get('/attendance', session, (c) =>
+    c.json<AttendanceResponse>({
+      minimumPercent: Math.round(attendanceMinimum(store) * 100),
+      subjects: getAttendance(store),
+    }),
+  );
 
   api.get('/abilities', session, (c) =>
     c.json<AbilitiesResponse>({ abilities: listAbilities(store) }),

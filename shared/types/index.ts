@@ -108,8 +108,12 @@ export interface PendingAction {
   status: ActionStatus;
   /** Why the AI wants to do this; shown on the approval card. */
   reason: string;
+  /** One plain sentence, e.g. "Email to Prof. K. Rao: “Extension request”". */
+  summary: string;
   preview: ActionPreview;
   createdAt: string;
+  /** When an undecided action expires (createdAt + 24 h). */
+  expiresAt: string;
   decidedAt?: string;
   /** Failure explanation when status is 'failed'. */
   error?: string;

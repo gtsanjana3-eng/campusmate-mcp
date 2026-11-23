@@ -1,0 +1,12 @@
+.page {
+  max-width: 52rem;
+}
+
+.heading {
+  font-size: var(--text-2xl);
+}
+
+.lead {
+  margin-bottom: var(--space-6);
+  color: var(--color-text-muted);
+}

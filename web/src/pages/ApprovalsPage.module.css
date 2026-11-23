@@ -1,0 +1,79 @@
+.page {
+  max-width: 52rem;
+}
+
+.heading {
+  font-size: var(--text-2xl);
+}
+
+.lead {
+  margin-bottom: var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.message:empty {
+  display: none;
+}
+
+.message {
+  display: block;
+  margin-bottom: var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  font-weight: var(--weight-medium);
+  background: var(--color-surface);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md);
+}
+
+.section {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-12);
+}
+
+.sectionTitle {
+  font-size: var(--text-xl);
+}
+
+.cards {
+  display: grid;
+  gap: var(--space-6);
+  padding: 0;
+  list-style: none;
+}
+
+.history {
+  display: grid;
+  padding: 0;
+  list-style: none;
+}
+
+.historyItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.historyText {
+  display: grid;
+  flex: 1 1 16rem;
+  overflow-wrap: anywhere;
+}
+
+.historyError {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+}
+
+.historyTime {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.dialogNote {
+  font-size: var(--text-sm);
+  color: var(--color-warning);
+}

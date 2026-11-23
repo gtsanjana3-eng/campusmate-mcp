@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { Navigate, type RouteObject } from 'react-router';
+import type { RouteObject } from 'react-router';
 import { ROUTES } from '@/config/routes';
 import { AuthGate } from '@/layouts/AuthGate';
 import { MainLayout } from '@/layouts/MainLayout';
@@ -27,8 +27,10 @@ export const routes: RouteObject[] = [
             // Every route below needs a logged-in student.
             Component: AuthGate,
             children: [
-              // Until the Today page exists, the home route opens Connect.
-              { path: ROUTES.home, element: <Navigate to={ROUTES.connect} replace /> },
+              { path: ROUTES.home, lazy: page(() => import('@/pages/TodayPage')) },
+              { path: ROUTES.approvals, lazy: page(() => import('@/pages/ApprovalsPage')) },
+              { path: ROUTES.activity, lazy: page(() => import('@/pages/ActivityPage')) },
+              { path: ROUTES.permissions, lazy: page(() => import('@/pages/PermissionsPage')) },
               { path: ROUTES.connect, lazy: page(() => import('@/pages/ConnectPage')) },
             ],
           },

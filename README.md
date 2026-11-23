@@ -4,10 +4,10 @@
 
 wHACKiest 2026 · Track 1: Make MCP Matter
 
-> **Status: MCP server complete; dashboard in progress.** All 10 MCP tools, 2 resources and 3
-> prompts work, with the approval flow behind them (see [docs/mcp-tools.md](docs/mcp-tools.md)).
-> The dashboard has login and the Connect page; Today, Approvals, Activity and Permissions pages
-> are built next. Anything marked _planned_ doesn't work yet.
+> **Status: MVP working locally.** All 10 MCP tools, 2 resources and 3 prompts work, with the
+> approval flow behind them (see [docs/mcp-tools.md](docs/mcp-tools.md)). The dashboard has
+> Today, Approvals, Activity, Permissions and Connect pages. Not yet deployed or tested inside
+> Claude itself. Anything marked _planned_ doesn't work yet.
 
 ## The problem
 
@@ -65,9 +65,9 @@ type-checks.
 
 | Stage | Goal                                          | Status              |
 | ----- | --------------------------------------------- | ------------------- |
-| A     | Repo, API contract, architecture docs, pitch  | **In progress**     |
-| B     | Read tools working in Claude via MCP          | Planned             |
-| C     | Approval loop and dashboard                   | Planned             |
+| A     | Repo, API contract, architecture docs, pitch  | Done                |
+| B     | Read tools working via MCP                    | Done (local)        |
+| C     | Approval loop and dashboard                   | Done (local)        |
 | D     | Deployed, tested, documented                  | Planned             |
 | E     | Undo, MCP Apps approval card, Google Calendar | Planned (build day) |
 

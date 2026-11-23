@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router';
 import { NAV_LINKS, ROUTES } from '@/config/routes';
 import { SITE_NAME } from '@/config/site';
 import { useLogout } from '@/hooks/useLogout';
+import { usePendingCount } from '@/hooks/usePendingCount';
 import styles from './Header.module.css';
 
 export function Header() {
@@ -12,6 +13,7 @@ export function Header() {
   const [openOnPath, setOpenOnPath] = useState<string | null>(null);
   const isMenuOpen = openOnPath === pathname;
   const isLoginPage = pathname === ROUTES.login;
+  const pendingCount = usePendingCount(!isLoginPage);
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -59,6 +61,14 @@ export function Header() {
                   <li key={to}>
                     <NavLink to={to} end className={styles.link}>
                       {label}
+                      {to === ROUTES.approvals && pendingCount > 0 && (
+                        <>
+                          <span className={styles.count} aria-hidden="true">
+                            {pendingCount}
+                          </span>
+                          <span className="visually-hidden">, {pendingCount} waiting</span>
+                        </>
+                      )}
                     </NavLink>
                   </li>
                 ))}

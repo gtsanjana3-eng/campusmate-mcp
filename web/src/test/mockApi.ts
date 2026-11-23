@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 
-type Handler = (init: RequestInit | undefined) => Response;
+type Handler = (init: RequestInit | undefined, url: URL) => Response;
 
 /**
  * Stubs `fetch` with per-route handlers keyed by "METHOD /path". Unknown routes return 404,
@@ -12,7 +12,7 @@ export function mockApi(routes: Record<string, Handler>) {
     const key = `${init?.method ?? 'GET'} ${url.pathname}`;
     const handler = routes[key];
     return handler
-      ? handler(init)
+      ? handler(init, url)
       : Response.json(
           { error: { code: 'not_found', message: `No mock for ${key}` } },
           { status: 404 },
