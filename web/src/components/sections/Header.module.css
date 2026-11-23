@@ -1,0 +1,91 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--header-height);
+}
+
+.brand {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.menuButton {
+  display: inline-grid;
+  place-items: center;
+  width: var(--tap-target);
+  height: var(--tap-target);
+  color: var(--color-text);
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+/* Mobile: the nav is a full-width panel below the bar, shown when open */
+.nav {
+  display: none;
+  flex-basis: 100%;
+  padding-bottom: var(--space-4);
+}
+
+.nav.open {
+  display: block;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-target);
+  padding-inline: var(--space-3);
+  color: var(--color-text-muted);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+}
+
+.link:hover {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.link[aria-current='page'] {
+  color: var(--color-primary);
+}
+
+/* Tablet and up: inline nav, no menu button */
+@media (min-width: 48rem) {
+  .menuButton {
+    display: none;
+  }
+
+  .nav,
+  .nav.open {
+    display: block;
+    flex-basis: auto;
+    padding-bottom: 0;
+  }
+
+  .list {
+    flex-direction: row;
+  }
+}

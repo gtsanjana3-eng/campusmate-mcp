@@ -1,0 +1,67 @@
+/*
+ * Design tokens: the only place raw colors, sizes and timings are defined.
+ * Components use var(--token) and never hardcode values.
+ * Breakpoints (CSS variables can't be used in media queries, so keep these in sync):
+ *   tablet  min-width: 48rem  (768px)
+ *   desktop min-width: 64rem  (1024px)
+ */
+:root {
+  /* Color: brand */
+  --color-primary: #2952cc;
+  --color-primary-hover: #1f3fa3;
+  --color-on-primary: #ffffff;
+
+  /* Color: neutrals (text contrast on --color-bg is at least 4.5:1) */
+  --color-bg: #ffffff;
+  --color-surface: #f5f7fa;
+  --color-border: #d5dae1;
+  --color-text: #1a1f29;
+  --color-text-muted: #4f5866;
+
+  /* Color: feedback */
+  --color-danger: #b42318;
+  --color-danger-bg: #fef3f2;
+  --color-focus: #2952cc;
+
+  /* Typography */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.2rem + 1.4vw, 2.25rem);
+  --text-3xl: clamp(2rem, 1.5rem + 2.4vw, 3.25rem);
+  --leading-tight: 1.2;
+  --leading-normal: 1.6;
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+
+  /* Spacing (4px scale) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Layout */
+  --container-max: 72rem;
+  --container-gutter: clamp(1rem, 0.5rem + 2vw, 2rem);
+  --header-height: 4rem;
+  --tap-target: 2.75rem; /* 44px minimum touch target */
+
+  /* Shape and depth */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.1);
+  --shadow-md: 0 4px 8px -2px rgb(16 24 40 / 0.1), 0 2px 4px -2px rgb(16 24 40 / 0.06);
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+}

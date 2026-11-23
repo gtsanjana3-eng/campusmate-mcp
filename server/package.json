@@ -1,0 +1,7 @@
+{
+  "name": "@campusmate/server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "CampusMate MCP server, REST API and static host. Implementation starts at task T0.2."
+}
