@@ -22,7 +22,7 @@ host only holds the MCP bearer token, which `/api` does not accept. There is no 
  │ CampusMate server: one Hono app on Node 24, one public HTTPS URL                 │
  │                                                                                  │
  │  auth/   bearer (/mcp)                session (/api, except POST /api/session)   │
- │  mcp/    9 tools · 2 resources · 3 prompts      api/   dashboard routes          │
+ │  mcp/    10 tools · 2 resources · 3 prompts      api/   dashboard routes          │
  │          (validate → call domain)                      (approve lives ONLY here) │
  │                           ▼                                                      │
  │  domain/ abilities · approvals (pending → approved/rejected/expired) · activity  │
@@ -63,12 +63,12 @@ host only holds the MCP bearer token, which `/api` does not accept. There is no 
 
 **Act tools** (create a pending action only; a `reason` is required)
 
-| Tool                  | Purpose                                                         | Stage     |
-| --------------------- | --------------------------------------------------------------- | --------- |
-| `draft_faculty_email` | Email to a faculty member; recipient always comes from our data | MVP       |
-| `add_deadline`        | Add a deadline, usually from a pasted notice                    | MVP       |
-| `create_reminder`     | Reminder for a deadline or class                                | MVP       |
-| `mark_deadline_done`  | Mark work as submitted                                          | After MVP |
+| Tool                  | Purpose                                                         | Stage |
+| --------------------- | --------------------------------------------------------------- | ----- |
+| `draft_faculty_email` | Email to a faculty member; recipient always comes from our data | MVP   |
+| `add_deadline`        | Add a deadline, usually from a pasted notice                    | MVP   |
+| `create_reminder`     | Reminder for a deadline or class                                | MVP   |
+| `mark_deadline_done`  | Mark work as submitted                                          | MVP   |
 
 **Resources:** `campusmate://timetable`, `campusmate://rules`.
 **Prompts:** `morning_brief`, `weekly_plan`, `write_to_faculty`.

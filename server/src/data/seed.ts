@@ -1,15 +1,6 @@
+import { istDateTime } from '../lib/time.ts';
 import seed from './seed/student.json' with { type: 'json' };
 import type { Store } from './store.ts';
-
-const IST_OFFSET_MINUTES = 330;
-
-/** ISO timestamp for a wall-clock time in India, `days` from `now` (e.g. 2026-11-26T23:59:00+05:30). */
-export function istDateTime(now: Date, days: number, time: string): string {
-  const ist = new Date(now.getTime() + IST_OFFSET_MINUTES * 60_000);
-  ist.setUTCDate(ist.getUTCDate() + days);
-  const date = ist.toISOString().slice(0, 10);
-  return `${date}T${time}:00+05:30`;
-}
 
 const TABLES = [
   'activity',

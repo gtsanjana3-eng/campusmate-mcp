@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { seededStore } from '../test/helpers.ts';
-import { istDateTime, seedIfEmpty, seedStore } from './seed.ts';
+import { istDateTime } from '../lib/time.ts';
+import { seedIfEmpty, seedStore } from './seed.ts';
 import { createStore } from './store.ts';
 
 const count = (store: ReturnType<typeof createStore>, table: string) =>

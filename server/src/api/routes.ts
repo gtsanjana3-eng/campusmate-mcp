@@ -3,7 +3,9 @@ import * as z from 'zod';
 import type {
   AbilitiesResponse,
   AbilityResponse,
+  ActionResponse,
   ActivityResponse,
+  ApprovalsResponse,
   ConnectResponse,
 } from '../../../shared/types/index.ts';
 import {
@@ -17,17 +19,28 @@ import type { Env } from '../config/env.ts';
 import type { Store } from '../data/store.ts';
 import { listAbilities, setAbility } from '../domain/abilities.ts';
 import { listActivity } from '../domain/activity.ts';
-import { unauthorized } from '../domain/errors.ts';
+import { approveAction, editEmailDraft, listActions, rejectAction } from '../domain/approvals.ts';
+import { unauthorized, validationError } from '../domain/errors.ts';
 import { log } from '../lib/logger.ts';
+import type { Mailer } from '../sources/mailer.ts';
 import { readJson } from './validate.ts';
 
 const SessionBody = z.object({ passcode: z.string().min(1).max(200) });
 const AbilityBody = z.object({ enabled: z.boolean() });
+const EditEmailBody = z.object({
+  subject: z.string().trim().min(3).max(120).optional(),
+  body: z.string().trim().min(10).max(2000).optional(),
+});
+// Decisions carry no data, but must still be JSON (see requireJsonForWrites).
+const DecisionBody = z.object({}).strict();
+const STATUSES = ['pending', 'approved', 'done', 'rejected', 'failed', 'expired'] as const;
 
 export const TEST_PROMPT = 'What do I have today, and is my attendance safe in every subject?';
 
+type ApiDeps = { store: Store; mailer: Mailer; now: () => Date };
+
 /** REST API for the dashboard. Mounted at /api. */
-export function createApiRoutes(env: Env, store: Store) {
+export function createApiRoutes(env: Env, { store, mailer, now }: ApiDeps) {
   const api = new Hono();
   const session = requireSession(env.SESSION_SECRET);
 
@@ -75,6 +88,42 @@ export function createApiRoutes(env: Env, store: Store) {
     return c.json<ActivityResponse>({
       entries: listActivity(store, Number.isFinite(limit) ? limit : 50),
     });
+  });
+
+  // --- Approvals: the ONLY way a proposed action can run. MCP has no route to these. ---
+
+  api.get('/approvals', session, (c) => {
+    const status = c.req.query('status');
+    if (status !== undefined && !(STATUSES as readonly string[]).includes(status)) {
+      throw validationError(`status must be one of: ${STATUSES.join(', ')}.`);
+    }
+    return c.json<ApprovalsResponse>({
+      actions: listActions(store, status as (typeof STATUSES)[number] | undefined, now()),
+    });
+  });
+
+  api.patch('/approvals/:id', session, async (c) => {
+    const edit = await readJson(c, EditEmailBody);
+    const action = editEmailDraft(store, c.req.param('id'), edit, now());
+    return c.json<ActionResponse>({ action });
+  });
+
+  api.post('/approvals/:id/approve', session, async (c) => {
+    await readJson(c, DecisionBody);
+    const action = approveAction(store, c.req.param('id'), { mailer, now: now() });
+    log.info('approval.decided', {
+      decision: 'approve',
+      tool: action.preview.tool,
+      status: action.status,
+    });
+    return c.json<ActionResponse>({ action });
+  });
+
+  api.post('/approvals/:id/reject', session, async (c) => {
+    await readJson(c, DecisionBody);
+    const action = rejectAction(store, c.req.param('id'), now());
+    log.info('approval.decided', { decision: 'reject', tool: action.preview.tool });
+    return c.json<ActionResponse>({ action });
   });
 
   api.get('/connect', session, (c) =>

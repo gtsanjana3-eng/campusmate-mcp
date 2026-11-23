@@ -5,7 +5,7 @@ import * as z from 'zod';
 import { setAbility } from '../domain/abilities.ts';
 import { listActivity } from '../domain/activity.ts';
 import { notFound } from '../domain/errors.ts';
-import { seededStore } from '../test/helpers.ts';
+import { seededStore, TEST_NOW } from '../test/helpers.ts';
 import { createMcpServer } from './createServer.ts';
 import { defineTool } from './defineTool.ts';
 
@@ -18,7 +18,7 @@ async function connectWith(behaviour: 'ok' | 'not_found' | 'crash') {
   const server = new McpServer({ name: 'test', version: '0' });
   defineTool(
     server,
-    { store },
+    { store, now: () => TEST_NOW },
     {
       name: 'get_attendance',
       kind: 'read',
@@ -93,8 +93,8 @@ describe('defineTool', () => {
 });
 
 describe('createMcpServer', () => {
-  it('answers ping and exposes no tools until Phase 9', async () => {
-    const server = createMcpServer({ store: seededStore() });
+  it('answers ping and identifies itself', async () => {
+    const server = createMcpServer({ store: seededStore(), now: () => TEST_NOW });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
     const client = new Client({ name: 'test', version: '0' });

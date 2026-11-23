@@ -12,16 +12,26 @@ import { logActivity } from '../domain/activity.ts';
 import { AppError } from '../domain/errors.ts';
 import { log } from '../lib/logger.ts';
 
-export type ToolDeps = { store: Store };
+export type ToolDeps = {
+  store: Store;
+  /** Injected so tests can fix "now"; production passes () => new Date(). */
+  now: () => Date;
+};
 
 /** What a tool handler returns: a reply for the AI, a sentence for the activity log, typed data. */
 export type ToolOutcome<Out> = {
   text: string;
   activity: string;
   structured: Out;
-  /** Pending action created by an act tool (Phase 9). */
+  /** Pending action created by an act tool. */
   actionId?: string;
 };
+
+/** MCP behaviour hints for clients. Act tools only record a proposal, so nothing is destructive. */
+const ANNOTATIONS = {
+  read: { readOnlyHint: true, openWorldHint: false },
+  act: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+} as const;
 
 type ToolSpec<
   In extends z.ZodObject & StandardSchemaWithJSON,
@@ -46,7 +56,8 @@ const textResult = (text: string, isError = false) => ({
  * Registers a tool with the rules every CampusMate tool must follow:
  * 1. the student's ability switch is checked first,
  * 2. every call (allowed, refused or failed) is written to the activity log,
- * 3. expected errors become a plain explanation; unexpected ones are logged and hidden.
+ * 3. expected errors become a plain explanation; unexpected ones are logged and hidden,
+ * 4. the server log records only the tool name and outcome, never student data.
  */
 export function defineTool<
   In extends z.ZodObject & StandardSchemaWithJSON,
@@ -66,6 +77,10 @@ export function defineTool<
       // The SDK has already validated `input` against spec.inputSchema.
       const outcome = handler(input);
       record(spec.kind === 'read' ? 'read' : 'proposed', outcome.activity, outcome.actionId);
+      log.info('mcp.tool', {
+        tool: spec.name,
+        outcome: spec.kind === 'read' ? 'read' : 'proposed',
+      });
       // Out is a z.object schema, so its output is always a plain object.
       const structuredContent = outcome.structured as Record<string, unknown>;
       return { ...textResult(outcome.text), structuredContent };
@@ -73,6 +88,7 @@ export function defineTool<
       if (error instanceof AppError) {
         const kind = error.code === 'ability_disabled' ? 'blocked' : 'failed';
         record(kind, `${spec.title}: ${error.message}`);
+        log.info('mcp.tool', { tool: spec.name, outcome: kind, code: error.code });
         return textResult(error.message, true);
       }
       log.error('mcp.tool_failed', error, { tool: spec.name });
@@ -88,6 +104,7 @@ export function defineTool<
       description: spec.description,
       inputSchema: spec.inputSchema,
       outputSchema: spec.outputSchema,
+      annotations: ANNOTATIONS[spec.kind],
     },
     // ToolCallback<In> is a conditional type TypeScript cannot resolve while In is generic;
     // `callback` is typed against the same schema, so this cast only bridges that gap.

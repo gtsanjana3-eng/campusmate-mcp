@@ -6,7 +6,10 @@
 
 // ---------- Academic data ----------
 
-export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
+/** Days with classes. */
+export type ClassDay = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
+/** Any day; Sunday appears only in study plans. */
+export type Weekday = ClassDay | 'sun';
 
 export interface Subject {
   code: string;
@@ -17,7 +20,7 @@ export interface Subject {
 export interface ClassSession {
   subjectCode: string;
   subjectName: string;
-  day: Weekday;
+  day: ClassDay;
   start: string;
   end: string;
   room: string;
@@ -55,6 +58,8 @@ export interface Notice {
 }
 
 export interface StudyBlock {
+  /** Calendar date in India, 'YYYY-MM-DD'. */
+  date: string;
   day: Weekday;
   start: string;
   end: string;

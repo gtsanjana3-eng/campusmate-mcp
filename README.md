@@ -4,9 +4,10 @@
 
 wHACKiest 2026 · Track 1: Make MCP Matter
 
-> **Status: foundation.** The server runs: it answers the MCP handshake (bearer token required),
-> serves `/api/health` and hosts the dashboard. No MCP tools or dashboard pages exist yet; they are
-> built next (see [Roadmap](#roadmap)). Anything marked _planned_ doesn't work yet.
+> **Status: MCP server complete; dashboard in progress.** All 10 MCP tools, 2 resources and 3
+> prompts work, with the approval flow behind them (see [docs/mcp-tools.md](docs/mcp-tools.md)).
+> The dashboard has login and the Connect page; Today, Approvals, Activity and Permissions pages
+> are built next. Anything marked _planned_ doesn't work yet.
 
 ## The problem
 

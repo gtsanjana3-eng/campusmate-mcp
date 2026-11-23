@@ -14,8 +14,11 @@ export const testEnv = parseEnv({
   PUBLIC_URL: `https://${TEST_HOST}`,
 });
 
+/** Fixed clock for tests: Tuesday 24 Nov 2026, 10:30 in India (05:00 UTC). */
+export const TEST_NOW = new Date('2026-11-24T05:00:00Z');
+
 /** A fresh in-memory database with the demo student, so tests never share state. */
-export function seededStore(now = new Date()) {
+export function seededStore(now = TEST_NOW) {
   const store = createStore(':memory:');
   seedStore(store, now);
   return store;
@@ -23,7 +26,7 @@ export function seededStore(now = new Date()) {
 
 export function testApp() {
   const store = seededStore();
-  return { store, app: createApp(testEnv, { store }) };
+  return { store, app: createApp(testEnv, { store, now: () => TEST_NOW }) };
 }
 
 /** Logs in and returns the Cookie header value for later requests. */
