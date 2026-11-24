@@ -226,6 +226,9 @@ export interface ConnectResponse {
 
 export interface GetTodayOutput {
   date: string;
+  /** Current time in India, e.g. 2026-11-24T10:30:00+05:30. The AI uses it to resolve "tomorrow", "in 2 hours". */
+  now: string;
+  weekday: Weekday;
   classes: ClassSession[];
   dueSoon: Deadline[];
   attendanceAlerts: AttendanceRow[];

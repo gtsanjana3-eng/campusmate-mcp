@@ -8,6 +8,9 @@ import { AppError, conflict, notFound, validationError } from '../../domain/erro
 import { defineTool, type ToolDeps } from '../defineTool.ts';
 import { DeadlineKind, isoDateTime, ProposalOutput, reason, subjectCode } from './schemas.ts';
 
+const ASK_FIRST =
+  'If the recipient, date, subject or deadline is unclear, ask the student instead of guessing.';
+
 const APPROVAL_NOTE =
   'This only creates a request. Nothing happens until the student approves it in the CampusMate dashboard; ' +
   'tell them it is waiting there. You cannot approve it yourself.';
@@ -82,7 +85,7 @@ export function registerActTools(server: McpServer, deps: ToolDeps): void {
       description:
         "Drafts a polite email to one of the student's faculty members (e.g. extension request, leave, doubt). " +
         'Identify the recipient by subjectCode or facultyName; the email address is looked up by CampusMate. ' +
-        `In this demo, approved emails go to the CampusMate demo outbox, not a real inbox. ${APPROVAL_NOTE}`,
+        `In this demo, approved emails go to the CampusMate demo outbox, not a real inbox. ${ASK_FIRST} ${APPROVAL_NOTE}`,
       inputSchema: z.object({
         subjectCode: subjectCode
           .optional()
@@ -133,7 +136,7 @@ export function registerActTools(server: McpServer, deps: ToolDeps): void {
       title: 'Add a deadline',
       description:
         'Proposes adding a deadline, for example one found in a notice the student pasted. Pass sourceNoticeId when ' +
-        `it came from a CampusMate notice. ${APPROVAL_NOTE}`,
+        `it came from a CampusMate notice. Only use dates the student gave or a notice states. ${ASK_FIRST} ${APPROVAL_NOTE}`,
       inputSchema: z.object({
         subjectCode,
         title: z.string().trim().min(3).max(120),
@@ -178,7 +181,7 @@ export function registerActTools(server: McpServer, deps: ToolDeps): void {
       title: 'Create a reminder',
       description:
         'Proposes a reminder at a specific time, optionally linked to a deadline (use its id from list_deadlines). ' +
-        `Reminders are stored in CampusMate. ${APPROVAL_NOTE}`,
+        `Reminders are stored in CampusMate. Resolve relative times from get_today.now. ${ASK_FIRST} ${APPROVAL_NOTE}`,
       inputSchema: z.object({
         text: z.string().trim().min(3).max(140),
         remindAt: isoDateTime.describe('When to remind, ISO 8601 with offset.'),
@@ -214,7 +217,7 @@ export function registerActTools(server: McpServer, deps: ToolDeps): void {
       title: 'Mark a deadline as done',
       description:
         'Proposes marking a deadline as submitted or finished, after the student says they did it. Use the id from ' +
-        `list_deadlines. ${APPROVAL_NOTE}`,
+        `list_deadlines. ${ASK_FIRST} ${APPROVAL_NOTE}`,
       inputSchema: z.object({ deadlineId: z.string().trim().min(1).max(60), reason }),
       outputSchema: ProposalOutput,
     },

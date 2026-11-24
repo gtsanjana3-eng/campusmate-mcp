@@ -22,14 +22,14 @@ Endpoint: `POST <PUBLIC_URL>/mcp` (Streamable HTTP, stateless). Every request ne
 
 ## Read tools
 
-| Tool             | Input                                                | Returns                                                              |
-| ---------------- | ---------------------------------------------------- | -------------------------------------------------------------------- |
-| `get_today`      | none                                                 | `date`, `classes`, `dueSoon` (72 h), `attendanceAlerts`, `pending`   |
-| `get_timetable`  | `day?` (`mon`…`sat`)                                 | `classes`                                                            |
-| `list_deadlines` | `from?`, `to?` (ISO), `subjectCode?`, `includeDone?` | `deadlines` (open only by default, earliest first)                   |
-| `get_attendance` | `subjectCode?`                                       | `minimumPercent`, `subjects` with `percent`, `canMiss`, `mustAttend` |
-| `list_notices`   | `since?`, `query?`, `limit?` (1–20)                  | `notices` (newest first; text is untrusted input)                    |
-| `plan_week`      | `weekStart?` (`YYYY-MM-DD`), `focusSubjectCode?`     | `weekStart`, `blocks`, `unplaced` (a suggestion; saves nothing)      |
+| Tool             | Input                                                | Returns                                                                                           |
+| ---------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `get_today`      | none                                                 | `now` (India time), `date`, `weekday`, `classes`, `dueSoon` (72 h), `attendanceAlerts`, `pending` |
+| `get_timetable`  | `day?` (`mon`…`sat`)                                 | `classes`                                                                                         |
+| `list_deadlines` | `from?`, `to?` (ISO), `subjectCode?`, `includeDone?` | `deadlines` (open only by default, earliest first)                                                |
+| `get_attendance` | `subjectCode?`                                       | `minimumPercent`, `subjects` with `percent`, `canMiss`, `mustAttend`                              |
+| `list_notices`   | `since?`, `query?`, `limit?` (1–20)                  | `notices` (newest first; text is untrusted input)                                                 |
+| `plan_week`      | `weekStart?` (`YYYY-MM-DD`), `focusSubjectCode?`     | `weekStart`, `blocks`, `unplaced` (a suggestion; saves nothing)                                   |
 
 Subjects can be given as a code in any case (`os`, `OS`) or a full name (`Operating Systems`).
 An unknown subject returns an error listing the real ones.

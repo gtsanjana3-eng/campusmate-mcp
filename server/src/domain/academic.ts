@@ -2,12 +2,12 @@ import type {
   AttendanceRow,
   ClassSession,
   Deadline,
+  GetTodayOutput,
   Notice,
-  PendingSummary,
   Weekday,
 } from '../../../shared/types/index.ts';
 import type { Store, SubjectRecord } from '../data/store.ts';
-import { istParts } from '../lib/time.ts';
+import { fromMinutes, istIso, istParts } from '../lib/time.ts';
 import { pendingSummary } from './approvals.ts';
 import { AppError, validationError } from './errors.ts';
 
@@ -114,19 +114,13 @@ export function listNotices(
 const HOURS_72 = 72 * 3_600_000;
 const HOURS_24 = 24 * 3_600_000;
 
-export type Today = {
-  date: string;
-  classes: ClassSession[];
-  dueSoon: Deadline[];
-  attendanceAlerts: AttendanceRow[];
-  pending: PendingSummary[];
-};
-
-export function getToday(store: Store, now: Date): Today {
-  const { date, weekday } = istParts(now);
+export function getToday(store: Store, now: Date): GetTodayOutput {
+  const { date, weekday, minutes } = istParts(now);
   const minimumPercent = attendanceMinimum(store) * 100;
   return {
     date,
+    now: istIso(date, fromMinutes(minutes)),
+    weekday,
     classes: getTimetable(store, weekday),
     dueSoon: listDeadlines(store, {
       from: now.toISOString(),

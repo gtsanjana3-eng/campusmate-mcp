@@ -15,7 +15,7 @@ import type {
  */
 
 export const Day = z.enum(['mon', 'tue', 'wed', 'thu', 'fri', 'sat']);
-const AnyDay = z.enum(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
+export const AnyDay = z.enum(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
 const DeadlineKind = z.enum(['assignment', 'exam', 'other']);
 const ActionStatus = z.enum(['pending', 'approved', 'done', 'rejected', 'failed', 'expired']);
 const ActTool = z.enum([

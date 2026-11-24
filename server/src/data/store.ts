@@ -163,6 +163,10 @@ export function createStore(path: string) {
       return { ...entry, id: String(result.lastInsertRowid) };
     },
 
+    pruneActivityBefore(cutoff: string): number {
+      return Number(db.prepare('DELETE FROM activity WHERE at < ?').run(cutoff).changes);
+    },
+
     listActivity(limit: number): ActivityEntry[] {
       const rows = db
         .prepare('SELECT * FROM activity ORDER BY id DESC LIMIT ?')

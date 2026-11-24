@@ -7,6 +7,7 @@ import type {
   PendingSummary,
 } from '../../../shared/types/index.ts';
 import type { PendingActionRecord, Store } from '../data/store.ts';
+import { log } from '../lib/logger.ts';
 import { formatIst } from '../lib/time.ts';
 import type { Mailer } from '../sources/mailer.ts';
 import { requireAbility } from './abilities.ts';
@@ -209,7 +210,10 @@ export function approveAction(
       summary: `Could not complete: ${summary}. ${message}`,
       actionId: id,
     });
-    if (!(error instanceof AppError)) throw error;
+    // Unexpected errors (e.g. the mail service is down) are logged for us; the student sees a
+    // plain "could not complete" result instead of a server error.
+    if (!(error instanceof AppError))
+      log.error('approval.execute_failed', error, { tool: record.tool });
   }
   return toPendingAction(getOrThrow(store, id));
 }

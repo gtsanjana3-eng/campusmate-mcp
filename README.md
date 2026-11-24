@@ -27,7 +27,8 @@ CampusMate is an **MCP server** plus a **companion dashboard**:
 Example: _"Can I skip OS tomorrow?"_ → _"You're at 77%. You can miss 1 more class and stay above
 75%."_ The number comes from code, not from the model.
 
-See [docs/architecture.md](docs/architecture.md) for the full design.
+See [docs/architecture.md](docs/architecture.md) for the full design and
+[docs/ai-workflows.md](docs/ai-workflows.md) for how the AI assistant uses CampusMate.
 
 ## Repository layout
 
