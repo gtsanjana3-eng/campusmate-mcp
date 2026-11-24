@@ -10,13 +10,12 @@ export async function logout(): Promise<void> {
   await apiRequest<void>('/api/session', { method: 'DELETE' });
 }
 
-/** True when the session cookie is still valid; false when the server says to log in. */
-export async function isLoggedIn(): Promise<boolean> {
+/** The session (with the student it belongs to) while the cookie is valid; null when the server says to log in. */
+export async function getSession(): Promise<SessionStatusResponse | null> {
   try {
-    const status = await apiRequest<SessionStatusResponse>('/api/session');
-    return status.authenticated;
+    return await apiRequest<SessionStatusResponse>('/api/session');
   } catch (error) {
-    if (error instanceof ApiError && error.status === 401) return false;
+    if (error instanceof ApiError && error.status === 401) return null;
     throw error;
   }
 }

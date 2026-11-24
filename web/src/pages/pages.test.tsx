@@ -12,7 +12,7 @@ type Routes = Parameters<typeof mockApi>[0];
 /** Logged-in API with sensible defaults; tests override the routes they care about. */
 function api(overrides: Routes = {}) {
   return mockApi({
-    'GET /api/session': () => Response.json({ authenticated: true }),
+    'GET /api/session': () => Response.json(fixtures.session),
     'GET /api/today': () => Response.json(fixtures.today),
     'GET /api/attendance': () => Response.json(fixtures.attendance),
     'GET /api/approvals': () => Response.json({ actions: [] }),
@@ -230,6 +230,26 @@ describe('Approvals page', () => {
     api();
     renderAt('/approvals');
     expect(await screen.findByText('Nothing waiting for your approval.')).toBeInTheDocument();
+  });
+});
+
+describe('transparency and identity', () => {
+  it('shows whose dashboard it is, and which MCP tool each entry and switch belongs to', async () => {
+    api();
+    renderAt('/activity');
+    const student = await screen.findByRole('region', { name: 'Student' });
+    expect(within(student).getByText('Ananya')).toBeInTheDocument();
+    expect(within(student).getByText('Demo Institute of Technology')).toBeInTheDocument();
+    expect(await screen.findAllByText('draft_faculty_email')).not.toHaveLength(0);
+  });
+
+  it('labels each permission with its tool, the data it reads and whether it needs approval', async () => {
+    api();
+    renderAt('/permissions');
+    const attendance = await screen.findByRole('switch', { name: 'Read your attendance' });
+    expect(attendance).toHaveAccessibleDescription(/get_attendance.*Read-only.*classes attended/);
+    const email = screen.getByRole('switch', { name: 'Draft emails to faculty' });
+    expect(email).toHaveAccessibleDescription(/draft_faculty_email.*Needs your approval/);
   });
 });
 

@@ -20,6 +20,7 @@ import {
   rejectAction,
 } from '@/services/approvalService';
 import styles from './ApprovalsPage.module.css';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 const loadApprovals = async () => (await listApprovals()).actions;
 
@@ -108,10 +109,10 @@ export default function ApprovalsPage() {
   return (
     <div className={`container ${styles.page}`}>
       <title>{pageTitle('Approvals')}</title>
-      <h1 className={styles.heading}>Approvals</h1>
-      <p className={styles.lead}>
-        Your assistant can only suggest actions. Nothing below happens until you approve it here.
-      </p>
+      <PageHeader
+        title="Approvals"
+        description="Your assistant can only suggest actions. Nothing below happens until you approve it here."
+      />
 
       {/* Always present, so screen readers announce each outcome. */}
       <output ref={messageRef} tabIndex={-1} className={styles.message}>

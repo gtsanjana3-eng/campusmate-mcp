@@ -1,11 +1,11 @@
-import { useId } from 'react';
+import { useId, type ReactNode } from 'react';
 import styles from './Switch.module.css';
 
 type SwitchProps = {
   label: string;
   checked: boolean;
   onChange: (next: boolean) => void;
-  description?: string;
+  description?: ReactNode;
   disabled?: boolean;
 };
 

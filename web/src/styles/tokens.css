@@ -55,6 +55,7 @@
 
   /* Layout */
   --container-max: 72rem;
+  --content-max: 52rem; /* readable width for lists and forms inside a page */
   --container-gutter: clamp(1rem, 0.5rem + 2vw, 2rem);
   --header-height: 4rem;
   --tap-target: 2.75rem; /* 44px minimum touch target */

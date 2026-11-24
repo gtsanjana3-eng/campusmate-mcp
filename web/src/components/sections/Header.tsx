@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router';
 import { NAV_LINKS, ROUTES } from '@/config/routes';
 import { SITE_NAME } from '@/config/site';
 import { useLogout } from '@/hooks/useLogout';
+import { Logo } from '@/components/ui/Logo';
 import { usePendingCount } from '@/hooks/usePendingCount';
 import styles from './Header.module.css';
 
@@ -28,6 +29,7 @@ export function Header() {
     <header className={styles.header}>
       <div className={`container ${styles.inner}`}>
         <Link to={ROUTES.home} className={styles.brand}>
+          <Logo />
           {SITE_NAME}
         </Link>
 

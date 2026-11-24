@@ -8,7 +8,10 @@ import { useAsync } from '@/hooks/useAsync';
 import { pageTitle } from '@/lib/pageTitle';
 import { listAbilities, setAbility } from '@/services/abilityService';
 import { ApiError } from '@/services/apiClient';
+import { Badge } from '@/components/ui/Badge';
+import { ABILITY_DETAILS } from '@/config/abilities';
 import styles from './PermissionsPage.module.css';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 const loadAbilities = async () => (await listAbilities()).abilities;
 
@@ -54,10 +57,10 @@ export default function PermissionsPage() {
   return (
     <div className={`container ${styles.page}`}>
       <title>{pageTitle('Permissions')}</title>
-      <h1 className={styles.heading}>Permissions</h1>
-      <p className={styles.lead}>
-        Choose what your AI assistant may do through CampusMate. Changes apply immediately.
-      </p>
+      <PageHeader
+        title="Permissions"
+        description="Choose what your AI assistant may use through CampusMate. Each switch is one MCP tool; changes apply immediately."
+      />
       <output className={styles.message}>{message}</output>
 
       {abilities.status === 'loading' && (
@@ -78,6 +81,21 @@ export default function PermissionsPage() {
                   <li key={ability.name}>
                     <Switch
                       label={ability.label}
+                      description={
+                        ABILITY_DETAILS[ability.name] && (
+                          <>
+                            <span className={styles.toolLine}>
+                              <code className={styles.tool}>
+                                {ABILITY_DETAILS[ability.name].tool}
+                              </code>
+                              <Badge tone={group === 'read' ? 'neutral' : 'info'}>
+                                {group === 'read' ? 'Read-only' : 'Needs your approval'}
+                              </Badge>
+                            </span>
+                            {ABILITY_DETAILS[ability.name].detail}
+                          </>
+                        )
+                      }
                       checked={confirmed[ability.name] ?? ability.enabled}
                       disabled={savingName === ability.name}
                       onChange={(next) => void toggle(ability, next)}

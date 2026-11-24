@@ -43,3 +43,17 @@
 .empty {
   color: var(--color-text-muted);
 }
+
+/* Phones: a class's time goes on its own line above the subject, so long names don't wrap word by word. */
+@media (max-width: 40rem) {
+  .item:has(> .time) {
+    flex-wrap: wrap;
+    row-gap: var(--space-1);
+  }
+
+  .time {
+    flex-basis: 100%;
+    min-width: 0;
+    font-size: var(--text-sm);
+  }
+}

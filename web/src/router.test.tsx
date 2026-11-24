@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { routes } from './router';
+import * as fixtures from './test/fixtures';
 import { mockApi, unauthorizedResponse } from './test/mockApi';
 
 const connectInfo = {
@@ -26,7 +27,7 @@ describe('logged out', () => {
     let loggedIn = false;
     mockApi({
       'GET /api/session': () =>
-        loggedIn ? Response.json({ authenticated: true }) : unauthorizedResponse(),
+        loggedIn ? Response.json(fixtures.session) : unauthorizedResponse(),
       'POST /api/session': () => {
         loggedIn = true;
         return new Response(null, { status: 204 });
@@ -86,7 +87,7 @@ describe('logged out', () => {
 
 const loggedInApi = () =>
   mockApi({
-    'GET /api/session': () => Response.json({ authenticated: true }),
+    'GET /api/session': () => Response.json(fixtures.session),
     'GET /api/connect': () => Response.json(connectInfo),
     'GET /api/integrations': () =>
       Response.json({ integrations: [{ provider: 'google_calendar', state: 'not_configured' }] }),
@@ -132,6 +133,15 @@ describe('logged in', () => {
       `claude mcp add --transport http campusmate ${connectInfo.mcpUrl} --header "Authorization: Bearer ${connectInfo.token}"`,
     );
     expect(screen.queryByText(/claude mcp add/)).not.toBeInTheDocument();
+  });
+
+  it('explains how CampusMate works before the connection steps', async () => {
+    loggedInApi();
+    renderAt('/connect');
+    expect(
+      await screen.findByRole('heading', { name: 'How CampusMate works' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/checks your Permissions switch/)).toBeInTheDocument();
   });
 
   it('copies values and announces it', async () => {

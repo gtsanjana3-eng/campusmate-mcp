@@ -1,15 +1,6 @@
-.page {
-  max-width: 48rem;
-}
-
-.heading {
-  font-size: var(--text-2xl);
-  margin-bottom: var(--space-2);
-}
-
-.lead {
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-8);
+/* Full site width so titles line up across pages; content keeps a readable width. */
+.page > * {
+  max-width: var(--content-max);
 }
 
 .steps {
@@ -38,4 +29,18 @@
 
 .extra {
   margin-top: var(--space-12);
+}
+
+.how {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
+  background: var(--color-info-bg);
+  border-color: transparent;
+}
+
+.flow {
+  display: grid;
+  gap: var(--space-2);
+  padding-left: var(--space-6);
 }

@@ -7,6 +7,7 @@ import { useAsync } from '@/hooks/useAsync';
 import { pageTitle } from '@/lib/pageTitle';
 import { getConnectInfo } from '@/services/connectService';
 import styles from './ConnectPage.module.css';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 /** Step-by-step guide to adding CampusMate to Claude (journey J0). */
 export default function ConnectPage() {
@@ -15,11 +16,37 @@ export default function ConnectPage() {
   return (
     <div className={`container ${styles.page}`}>
       <title>{pageTitle('Connect')}</title>
-      <h1 className={styles.heading}>Connect CampusMate to your AI assistant</h1>
-      <p className={styles.lead}>
-        Add CampusMate once as a connector. Your assistant can then read your college day, and
-        anything it wants to <em>do</em> waits for your approval here.
-      </p>
+      <PageHeader
+        title="Connect CampusMate to your AI assistant"
+        description={
+          <>
+            Add CampusMate once as a connector. Your assistant can then read your college day, and
+            anything it wants to <em>do</em> waits for your approval here.
+          </>
+        }
+      />
+
+      <Card className={styles.how}>
+        <h2 className={styles.stepTitle}>How CampusMate works</h2>
+        <ol className={styles.flow}>
+          <li>
+            <strong>You ask your assistant</strong>, for example “Can I skip OS tomorrow?”. It picks
+            a CampusMate tool over MCP.
+          </li>
+          <li>
+            <strong>CampusMate checks your Permissions switch</strong> for that tool. If it&apos;s
+            off, the assistant is told no, and you see “Blocked” in Activity.
+          </li>
+          <li>
+            <strong>Reading tools answer straight away</strong> and change nothing. Acting tools
+            only create a card on Approvals.
+          </li>
+          <li>
+            <strong>You decide.</strong> Approve, edit or reject each card. Every step is listed in
+            Activity, with the tool that was used.
+          </li>
+        </ol>
+      </Card>
 
       {info.status === 'loading' && (
         <StatusMessage variant="loading" title="Loading your connection details…" />

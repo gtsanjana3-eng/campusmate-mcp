@@ -16,6 +16,7 @@
 }
 
 .description {
+  display: block;
   font-size: var(--text-sm);
   color: var(--color-text-muted);
 }

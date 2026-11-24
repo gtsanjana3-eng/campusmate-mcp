@@ -58,7 +58,10 @@ describe('session API', () => {
     const { app } = testApp();
     const cookie = await login(app);
     const status = await app.request('/api/session', { headers: { Cookie: cookie } });
-    expect(await status.json()).toEqual({ authenticated: true });
+    expect(await status.json()).toEqual({
+      authenticated: true,
+      student: { name: 'Ananya', college: 'Demo Institute of Technology' },
+    });
 
     const logout = await app.request('/api/session', {
       method: 'DELETE',

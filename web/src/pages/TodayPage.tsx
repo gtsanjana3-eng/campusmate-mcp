@@ -11,6 +11,7 @@ import { formatLongDate } from '@/lib/format';
 import { pageTitle } from '@/lib/pageTitle';
 import { getAttendance, getToday } from '@/services/todayService';
 import styles from './TodayPage.module.css';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 const loadToday = async () => {
   const [today, attendance] = await Promise.all([getToday(), getAttendance()]);
@@ -25,7 +26,10 @@ export default function TodayPage() {
   return (
     <div className="container">
       <title>{pageTitle('Today')}</title>
-      <h1 className={styles.heading}>Today</h1>
+      <PageHeader
+        title="Today"
+        description="Your classes, what's due soon and your attendance: the same data your AI assistant reads."
+      />
 
       {view.status === 'loading' && <StatusMessage variant="loading" title="Loading your day…" />}
       {view.status === 'error' && (

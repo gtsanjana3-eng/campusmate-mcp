@@ -164,6 +164,8 @@ export interface SessionRequest {
 /** GET /api/session — lets the dashboard check whether its cookie is still valid. */
 export interface SessionStatusResponse {
   authenticated: true;
+  /** Who the dashboard belongs to, from the server's settings (demo data in this deployment). */
+  student: { name: string; college: string };
 }
 
 export interface HealthResponse {

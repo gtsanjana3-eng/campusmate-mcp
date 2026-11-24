@@ -1,14 +1,6 @@
-.page {
-  max-width: 52rem;
-}
-
-.heading {
-  font-size: var(--text-2xl);
-}
-
-.lead {
-  margin-bottom: var(--space-4);
-  color: var(--color-text-muted);
+/* Full site width so titles line up across pages; content keeps a readable width. */
+.page > * {
+  max-width: var(--content-max);
 }
 
 .message:empty {

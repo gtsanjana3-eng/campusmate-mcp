@@ -1,12 +1,15 @@
-.page {
-  max-width: 52rem;
+/* Full site width so titles line up across pages; content keeps a readable width. */
+.page > * {
+  max-width: var(--content-max);
 }
 
-.heading {
-  font-size: var(--text-2xl);
+/* A fixed column for the status label, so every entry's text starts at the same place. */
+.kind {
+  flex-shrink: 0;
+  width: 6.5rem;
 }
 
-.lead {
-  margin-bottom: var(--space-6);
-  color: var(--color-text-muted);
+.tool {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
 }

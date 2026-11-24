@@ -3,6 +3,7 @@ import type {
   ActivityEntry,
   AttendanceResponse,
   PendingAction,
+  SessionStatusResponse,
   TodayResponse,
 } from '@shared/types';
 
@@ -109,3 +110,8 @@ export const abilities: Ability[] = [
   { name: 'get_attendance', group: 'read', label: 'Read your attendance', enabled: true },
   { name: 'draft_faculty_email', group: 'act', label: 'Draft emails to faculty', enabled: true },
 ];
+
+export const session: SessionStatusResponse = {
+  authenticated: true,
+  student: { name: 'Ananya', college: 'Demo Institute of Technology' },
+};

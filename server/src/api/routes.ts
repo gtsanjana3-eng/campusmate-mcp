@@ -11,6 +11,7 @@ import type {
   ApprovalsResponse,
   AttendanceResponse,
   ConnectResponse,
+  SessionStatusResponse,
   TodayResponse,
 } from '../../../shared/types/index.ts';
 import {
@@ -193,7 +194,15 @@ export function createApiRoutes(
   });
 
   // Everything below needs a logged-in student.
-  api.get('/session', session, (c) => c.json({ authenticated: true }));
+  api.get('/session', session, (c) =>
+    c.json<SessionStatusResponse>({
+      authenticated: true,
+      student: {
+        name: store.getSetting('student_name') ?? 'Student',
+        college: store.getSetting('college_name') ?? '',
+      },
+    }),
+  );
 
   // The dashboard reads the same data the MCP tools use, through the same domain functions.
   api.get('/today', session, (c) => {

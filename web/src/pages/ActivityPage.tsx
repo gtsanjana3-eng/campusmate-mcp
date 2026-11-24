@@ -8,6 +8,7 @@ import { pageTitle } from '@/lib/pageTitle';
 import { listActivity } from '@/services/activityService';
 import lists from '@/components/sections/Lists.module.css';
 import styles from './ActivityPage.module.css';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 const KINDS: Record<ActivityKind, { tone: BadgeTone; label: string }> = {
   read: { tone: 'neutral', label: 'Read' },
@@ -28,11 +29,10 @@ export default function ActivityPage() {
   return (
     <div className={`container ${styles.page}`}>
       <title>{pageTitle('Activity')}</title>
-      <h1 className={styles.heading}>Activity</h1>
-      <p className={styles.lead}>
-        Every time your assistant used CampusMate: what it read, what it suggested, and what
-        happened.
-      </p>
+      <PageHeader
+        title="Activity"
+        description="Every time your assistant used CampusMate: which tool it used, what it read or suggested, and what happened."
+      />
 
       {activity.status === 'loading' && (
         <StatusMessage variant="loading" title="Loading activity…" />
@@ -49,12 +49,20 @@ export default function ActivityPage() {
         <ol className={lists.list}>
           {activity.data.map((entry) => (
             <li key={entry.id} className={lists.item}>
-              <Badge tone={KINDS[entry.kind].tone}>{KINDS[entry.kind].label}</Badge>
+              <span className={styles.kind}>
+                <Badge tone={KINDS[entry.kind].tone}>{KINDS[entry.kind].label}</Badge>
+              </span>
               <span className={lists.main}>
                 <span>{entry.summary}</span>
-                <time className={lists.meta} dateTime={entry.at}>
-                  {formatDateTime(entry.at)}
-                </time>
+                <span className={lists.meta}>
+                  <time dateTime={entry.at}>{formatDateTime(entry.at)}</time>
+                  {entry.tool && (
+                    <>
+                      {' · MCP tool '}
+                      <code className={styles.tool}>{entry.tool}</code>
+                    </>
+                  )}
+                </span>
               </span>
             </li>
           ))}
