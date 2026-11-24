@@ -86,6 +86,11 @@ describe('Approvals page', () => {
     expect(
       await within(nav).findByRole('link', { name: 'Approvals, 1 waiting' }),
     ).toBeInTheDocument();
+    // Phones see the count on the closed menu button too.
+    const menu = screen.getByRole('button', { name: 'Open menu, 1 waiting for approval' });
+    expect(menu).toHaveTextContent('1');
+    await userEvent.click(menu);
+    expect(screen.getByRole('button', { name: 'Close menu' })).not.toHaveTextContent('1');
   });
 
   it('announces approvals that arrive in the background, but not the ones already there', async () => {

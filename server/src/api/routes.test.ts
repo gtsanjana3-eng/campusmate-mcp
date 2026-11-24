@@ -173,6 +173,8 @@ describe('logout (audit M3)', () => {
   it('stops a copied cookie from working', async () => {
     const { app } = testApp();
     const stolen = await login(app);
+    // A copied cookie is always older than the logout; same-millisecond timing would be a test artefact.
+    await new Promise((resolve) => setTimeout(resolve, 2));
     await app.request('/api/session', { method: 'DELETE', headers: { Cookie: stolen } });
     expect((await app.request('/api/abilities', { headers: { Cookie: stolen } })).status).toBe(401);
   });

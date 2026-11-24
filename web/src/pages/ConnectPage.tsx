@@ -48,11 +48,25 @@ export default function ConnectPage() {
           <li>
             <Card className={styles.step}>
               <h2 className={styles.stepTitle}>Add the connector in Claude</h2>
+              <h3 className={styles.option}>Claude app or claude.ai</h3>
               <p>
-                In Claude, open <strong>Customize → Connectors → Add custom connector</strong>.
-                Paste the MCP URL, then add a request header named <code>Authorization</code> with
-                the value <code>Bearer</code> followed by a space and your token.
+                Open <strong>Connectors → Add custom connector</strong> and paste the MCP URL. Under{' '}
+                <strong>Request headers</strong>, choose <code>authorization</code> and enter{' '}
+                <code>Bearer</code>, a space, then your token.
               </p>
+              <p className={styles.note}>
+                Request headers are still in beta and not every account has them. If you don&apos;t
+                see that section, use Claude Code instead.
+              </p>
+              <h3 className={styles.option}>Claude Code</h3>
+              <p>
+                Run this command once in a terminal. It contains your token, so keep it private.
+              </p>
+              <CopyField
+                label="Claude Code command"
+                value={`claude mcp add --transport http campusmate ${info.data.mcpUrl} --header "Authorization: Bearer ${info.data.token}"`}
+                secret
+              />
             </Card>
           </li>
           <li>

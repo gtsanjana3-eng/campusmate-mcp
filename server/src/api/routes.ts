@@ -85,20 +85,50 @@ export function clientAddress(c: Context, trustedHops = 0): string {
   }
 }
 
-/** Privacy-safe facts about how a login request arrived (no addresses), to check proxy settings. */
-function arrivalFacts(c: Context) {
+const isPrivateAddress = (address: string) =>
+  /^(10\.|127\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|::1$|f[cd]|::ffff:(10|127|192\.168)\.)/i.test(
+    address,
+  );
+
+/** Headers some proxies set to the visitor's own address. Logged only as a position, never a value. */
+const CLIENT_IP_HEADERS = ['cf-connecting-ip', 'true-client-ip', 'x-real-ip'] as const;
+
+/**
+ * Privacy-safe facts about how a login request arrived, to choose TRUST_PROXY_HOPS. No address is
+ * ever logged: only counts, whether the socket is private, and for each client-address header
+ * where its value sits in X-Forwarded-For (counted from the right) and whether the limiter used it.
+ */
+export function arrivalFacts(c: Context, limiterKey: string) {
   let socketIsPrivate: boolean | 'unknown' = 'unknown';
   try {
-    const address = getConnInfo(c).remote.address ?? '';
-    socketIsPrivate =
-      /^(10\.|127\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::1$|fc|fd|::ffff:(10|127|192\.168)\.)/i.test(
-        address,
-      );
+    socketIsPrivate = isPrivateAddress(getConnInfo(c).remote.address ?? '');
   } catch {
     // no socket in tests
   }
-  const forwarded = c.req.header('x-forwarded-for');
-  return { socketIsPrivate, forwardedEntries: forwarded ? forwarded.split(',').length : 0 };
+  const forwarded = (c.req.header('x-forwarded-for') ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  const clientHeaders = Object.fromEntries(
+    CLIENT_IP_HEADERS.map((name) => {
+      const value = c.req.header(name)?.trim();
+      if (!value) return [name, 'absent'];
+      const fromRight = forwarded.length - forwarded.lastIndexOf(value);
+      return [
+        name,
+        {
+          positionFromRight: forwarded.includes(value) ? fromRight : 'not-forwarded',
+          usedByLimiter: value === limiterKey,
+        },
+      ];
+    }),
+  );
+  return {
+    socketIsPrivate,
+    forwardedEntries: forwarded.length,
+    forwardedKinds: forwarded.map((entry) => (isPrivateAddress(entry) ? 'private' : 'public')),
+    clientHeaders,
+  };
 }
 
 /** REST API for the dashboard. Mounted at /api. */
@@ -141,7 +171,10 @@ export function createApiRoutes(
     const { passcode } = await readJson(c, SessionBody);
     if (!passcodeMatches(passcode, env.DASHBOARD_PASSCODE)) {
       limiter.recordFailure(client);
-      log.info('auth.login_failed', { ...arrivalFacts(c), trustedHops: env.TRUST_PROXY_HOPS });
+      log.info('auth.login_failed', {
+        ...arrivalFacts(c, client),
+        trustedHops: env.TRUST_PROXY_HOPS,
+      });
       throw unauthorized();
     }
     limiter.recordSuccess(client);

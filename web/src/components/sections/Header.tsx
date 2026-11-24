@@ -40,7 +40,15 @@ export function Header() {
               aria-controls="primary-nav"
               onClick={() => setOpenOnPath(isMenuOpen ? null : pathname)}
             >
-              <span className="visually-hidden">{isMenuOpen ? 'Close menu' : 'Open menu'}</span>
+              <span className="visually-hidden">
+                {isMenuOpen ? 'Close menu' : 'Open menu'}
+                {!isMenuOpen && pendingCount > 0 && `, ${pendingCount} waiting for approval`}
+              </span>
+              {!isMenuOpen && pendingCount > 0 && (
+                <span className={`${styles.count} ${styles.menuCount}`} aria-hidden="true">
+                  {pendingCount}
+                </span>
+              )}
               <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
                 <path
                   d={isMenuOpen ? 'M6 6l12 12M18 6L6 18' : 'M4 7h16M4 12h16M4 17h16'}

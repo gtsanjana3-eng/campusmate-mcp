@@ -1,4 +1,6 @@
+import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
+import { arrivalFacts, clientAddress } from '../api/routes.ts';
 import { createApp } from '../app.ts';
 import { createLoginLimiter } from './loginLimiter.ts';
 import { login, seededStore, TEST_PASSCODE, testApp, testEnv } from '../test/helpers.ts';
@@ -95,5 +97,37 @@ describe('behind a trusted proxy (review M2)', () => {
     const { app } = testApp();
     for (let i = 0; i < 5; i++) await from(app, `203.0.113.${i}`, `wrong-${i}`);
     expect((await from(app, '198.51.100.20', TEST_PASSCODE)).status).toBe(429);
+  });
+});
+
+async function probe(
+  hops: number,
+  headers: Record<string, string>,
+): Promise<ReturnType<typeof arrivalFacts>> {
+  const app = new Hono().get('/', (c) => c.json(arrivalFacts(c, clientAddress(c, hops))));
+  const response = await app.request('/', { headers });
+  return (await response.json()) as ReturnType<typeof arrivalFacts>;
+}
+
+describe('proxy diagnostics in the failed-login log (Phase 22, issue 4)', () => {
+  it("reports where the visitor's address sits, without logging any address", async () => {
+    const headers = {
+      'X-Forwarded-For': '192.0.2.1, 203.0.113.7, 104.16.0.1, 10.0.0.5',
+      'CF-Connecting-IP': '203.0.113.7',
+    };
+    const facts = await probe(3, headers);
+    expect(facts).toMatchObject({
+      forwardedEntries: 4,
+      forwardedKinds: ['public', 'public', 'public', 'private'],
+      clientHeaders: {
+        'cf-connecting-ip': { positionFromRight: 3, usedByLimiter: true },
+        'true-client-ip': 'absent',
+        'x-real-ip': 'absent',
+      },
+    });
+    expect(JSON.stringify(facts)).not.toMatch(/\d+\.\d+\.\d+\.\d+/);
+    expect((await probe(1, headers)).clientHeaders['cf-connecting-ip']).toMatchObject({
+      usedByLimiter: false,
+    });
   });
 });

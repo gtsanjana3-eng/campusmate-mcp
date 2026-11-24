@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { TextField } from '@/components/ui/TextField';
 import { ROUTES } from '@/config/routes';
-import { SITE_NAME } from '@/config/site';
+import { REPOSITORY_URL, SITE_DESCRIPTION, SITE_NAME } from '@/config/site';
 import { pageTitle } from '@/lib/pageTitle';
 import { ApiError } from '@/services/apiClient';
 import { login } from '@/services/sessionService';
@@ -66,6 +66,34 @@ export default function LoginPage() {
           </Button>
         </form>
       </Card>
+
+      <section className={styles.about} aria-labelledby="about-heading">
+        <h2 id="about-heading" className={styles.aboutHeading}>
+          What is {SITE_NAME}?
+        </h2>
+        <p>{SITE_DESCRIPTION}</p>
+        <ul className={styles.points}>
+          <li>
+            <strong>Reads instantly.</strong> Your AI assistant (for example Claude) connects
+            through MCP and answers from your timetable, deadlines, attendance and notices.
+          </li>
+          <li>
+            <strong>Only suggests actions.</strong> Faculty emails, reminders and new deadlines wait
+            here as cards.
+          </li>
+          <li>
+            <strong>You decide.</strong> Approve, edit or reject each one, and switch off anything
+            the assistant may use.
+          </li>
+        </ul>
+        <p className={styles.note}>
+          This demo uses a sample student&apos;s data; emails go to a demo outbox.{' '}
+          <a href={REPOSITORY_URL} target="_blank" rel="noopener noreferrer">
+            Source code and documentation
+          </a>
+          .
+        </p>
+      </section>
     </div>
   );
 }

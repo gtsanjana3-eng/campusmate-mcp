@@ -65,6 +65,16 @@ describe('logged out', () => {
     expect(screen.getByLabelText('Passcode')).toHaveAttribute('aria-invalid', 'true');
   });
 
+  it('explains what CampusMate is to visitors who are not logged in', async () => {
+    mockApi({ 'GET /api/session': unauthorizedResponse });
+    renderAt('/login');
+    const about = await screen.findByRole('region', { name: 'What is CampusMate?' });
+    expect(within(about).getByText(/Only suggests actions/)).toBeInTheDocument();
+    expect(
+      within(about).getByRole('link', { name: 'Source code and documentation' }),
+    ).toHaveAttribute('href', 'https://github.com/gtsanjana3-eng/campusmate-mcp');
+  });
+
   it('asks for a passcode before calling the server', async () => {
     const fetchMock = mockApi({});
     renderAt('/login');
@@ -110,6 +120,18 @@ describe('logged in', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Show token' }));
     expect(screen.getByText(connectInfo.token)).toBeInTheDocument();
+  });
+
+  it('offers a Claude Code command as well, with the token hidden until shown', async () => {
+    loggedInApi();
+    const user = userEvent.setup();
+    renderAt('/connect');
+    expect(await screen.findByText(/Request headers are still in beta/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Copy claude code command' }));
+    expect(await navigator.clipboard.readText()).toBe(
+      `claude mcp add --transport http campusmate ${connectInfo.mcpUrl} --header "Authorization: Bearer ${connectInfo.token}"`,
+    );
+    expect(screen.queryByText(/claude mcp add/)).not.toBeInTheDocument();
   });
 
   it('copies values and announces it', async () => {
