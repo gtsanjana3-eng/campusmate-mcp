@@ -1,0 +1,19 @@
+/* Shared by the sign-in and sign-up pages. */
+.lead {
+  color: var(--color-text-muted);
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.links,
+.help {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.links a {
+  font-weight: var(--weight-bold);
+}

@@ -23,11 +23,13 @@ export const routes: RouteObject[] = [
         ErrorBoundary: RouteErrorPage,
         children: [
           { path: ROUTES.login, lazy: page(() => import('@/pages/LoginPage')) },
+          { path: ROUTES.signup, lazy: page(() => import('@/pages/SignUpPage')) },
           {
             // Every route below needs a logged-in student.
             Component: AuthGate,
             children: [
               { path: ROUTES.home, lazy: page(() => import('@/pages/TodayPage')) },
+              { path: ROUTES.assistant, lazy: page(() => import('@/pages/AssistantPage')) },
               { path: ROUTES.approvals, lazy: page(() => import('@/pages/ApprovalsPage')) },
               { path: ROUTES.activity, lazy: page(() => import('@/pages/ActivityPage')) },
               { path: ROUTES.permissions, lazy: page(() => import('@/pages/PermissionsPage')) },

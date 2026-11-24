@@ -5,7 +5,19 @@ import type {
   AttendanceResponse,
   TodayResponse,
 } from '../../../shared/types/index.ts';
-import { login, TEST_HOST, TEST_PASSCODE, TEST_TOKEN, testApp } from '../test/helpers.ts';
+import {
+  login,
+  TEST_HOST,
+  TEST_OWNER_EMAIL,
+  TEST_OWNER_PASSWORD,
+  TEST_PASSCODE,
+  TEST_NOW,
+  TEST_TOKEN,
+  seededStore,
+  testApp,
+  testEnv,
+} from '../test/helpers.ts';
+import { createApp } from '../app.ts';
 
 const json = (body: unknown) => ({
   headers: { 'Content-Type': 'application/json' },
@@ -13,21 +25,21 @@ const json = (body: unknown) => ({
 });
 
 describe('session API', () => {
-  it('refuses a wrong passcode', async () => {
+  it('refuses a wrong password', async () => {
     const { app } = testApp();
     const response = await app.request('/api/session', {
       method: 'POST',
-      ...json({ passcode: 'nope' }),
+      ...json({ email: TEST_OWNER_EMAIL, password: 'nope-wrong-password' }),
     });
     expect(response.status).toBe(401);
     expect(response.headers.get('set-cookie')).toBeNull();
   });
 
-  it('sets a hardened cookie on the right passcode', async () => {
+  it('sets a hardened cookie on the right email and password', async () => {
     const { app } = testApp();
     const response = await app.request('/api/session', {
       method: 'POST',
-      ...json({ passcode: TEST_PASSCODE }),
+      ...json({ email: TEST_OWNER_EMAIL, password: TEST_OWNER_PASSWORD }),
     });
     expect(response.status).toBe(204);
     const cookie = response.headers.get('set-cookie') ?? '';
@@ -42,7 +54,7 @@ describe('session API', () => {
     const response = await app.request('/api/session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `passcode=${TEST_PASSCODE}`,
+      body: `email=${TEST_OWNER_EMAIL}`,
     });
     expect(response.status).toBe(415);
   });
@@ -60,6 +72,7 @@ describe('session API', () => {
     const status = await app.request('/api/session', { headers: { Cookie: cookie } });
     expect(await status.json()).toEqual({
       authenticated: true,
+      user: { name: 'Ananya', email: TEST_OWNER_EMAIL },
       student: { name: 'Ananya', college: 'Demo Institute of Technology' },
     });
 
@@ -205,5 +218,83 @@ describe('logout (audit M3)', () => {
     expect((await app.request('/api/abilities', { headers: { Cookie: student } })).status).toBe(
       200,
     );
+  });
+});
+
+const signUp = (app: ReturnType<typeof testApp>['app'], body: Record<string, string>) =>
+  app.request('/api/users', { method: 'POST', ...json(body) });
+
+describe('accounts', () => {
+  const newcomer = {
+    name: 'Ravi',
+    email: 'Ravi@College.test',
+    password: 'ravi-strong-pass-31',
+    inviteCode: TEST_PASSCODE,
+  };
+
+  it('signs up with the invite code, logs in, and knows who is signed in', async () => {
+    const { app } = testApp();
+    const created = await signUp(app, newcomer);
+    expect(created.status).toBe(201);
+    const cookie = created.headers.get('set-cookie')?.split(';')[0] ?? '';
+    const session = await app.request('/api/session', { headers: { Cookie: cookie } });
+    expect(await session.json()).toMatchObject({
+      user: { name: 'Ravi', email: 'ravi@college.test' },
+    });
+
+    const again = await app.request('/api/session', {
+      method: 'POST',
+      ...json({ email: 'RAVI@college.test', password: newcomer.password }),
+    });
+    expect(again.status).toBe(204);
+  });
+
+  it('refuses a wrong invite code, a short password and a taken email', async () => {
+    const { app } = testApp();
+    expect((await signUp(app, { ...newcomer, inviteCode: 'guess-1234567' })).status).toBe(401);
+    expect((await signUp(app, { ...newcomer, password: 'short' })).status).toBe(400);
+    expect((await signUp(app, { ...newcomer, email: TEST_OWNER_EMAIL })).status).toBe(409);
+  });
+
+  it('counts wrong invite codes toward the lockout', async () => {
+    const { app } = testApp();
+    for (let i = 0; i < 5; i++)
+      await signUp(app, { ...newcomer, inviteCode: `guess-${i}-abcdefg` });
+    expect((await signUp(app, newcomer)).status).toBe(429);
+  });
+
+  it('gives the same answer for an unknown email and a wrong password', async () => {
+    const { app } = testApp();
+    const unknown = await app.request('/api/session', {
+      method: 'POST',
+      ...json({ email: 'nobody@college.test', password: TEST_OWNER_PASSWORD }),
+    });
+    const wrong = await app.request('/api/session', {
+      method: 'POST',
+      ...json({ email: TEST_OWNER_EMAIL, password: 'wrong-password-123' }),
+    });
+    expect(unknown.status).toBe(401);
+    expect(await unknown.json()).toEqual(await wrong.json());
+  });
+
+  it('never returns or stores the password in plain text', async () => {
+    const { app, store } = testApp();
+    await signUp(app, newcomer);
+    const user = store.findUserByEmail('ravi@college.test');
+    expect(user?.passwordHash).not.toContain(newcomer.password);
+    const cookie = (await login(app)).toString();
+    const body = await (await app.request('/api/session', { headers: { Cookie: cookie } })).text();
+    expect(body).not.toMatch(/hash|password/i);
+  });
+
+  it('ends a session whose account no longer exists', async () => {
+    const { app, store } = testApp();
+    const created = await signUp(app, newcomer);
+    const cookie = created.headers.get('set-cookie')?.split(';')[0] ?? '';
+    store.close();
+    const fresh = createApp(testEnv, { store: seededStore(), now: () => TEST_NOW });
+    expect((await fresh.request('/api/today', { headers: { Cookie: cookie } })).status).toBe(401);
+    // The owner account is recreated from settings, so the owner can always log in again.
+    expect((await login(fresh)).startsWith('cm_session=')).toBe(true);
   });
 });

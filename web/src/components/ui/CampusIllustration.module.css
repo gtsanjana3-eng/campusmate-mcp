@@ -1,0 +1,104 @@
+.art {
+  width: 100%;
+  height: auto;
+}
+
+.sky {
+  fill: var(--color-accent-soft);
+}
+
+.sun {
+  fill: var(--color-accent);
+  opacity: 0.85;
+}
+
+.hillFar {
+  fill: #b9cdbd;
+}
+
+.stone {
+  fill: #e9dcc0;
+}
+
+.stoneLight {
+  fill: #f5ecd8;
+}
+
+.roof,
+.dome {
+  fill: var(--color-primary);
+}
+
+.trim {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+}
+
+.column {
+  fill: #fffaf0;
+  stroke: #d8c8a5;
+  stroke-width: 1;
+}
+
+.window {
+  fill: #2f5f49;
+  opacity: 0.85;
+}
+
+.door {
+  fill: var(--color-primary);
+}
+
+.gold {
+  fill: var(--color-accent);
+}
+
+.clock {
+  fill: #fffaf0;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+}
+
+.hands {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.trunk {
+  fill: #6b4e2e;
+}
+
+.leaf {
+  fill: #3f7a5a;
+}
+
+.leafDark {
+  fill: #2a5e43;
+}
+
+.lawn {
+  fill: #8fb59a;
+}
+
+.path {
+  fill: #eadcbe;
+}
+
+.person {
+  fill: var(--color-primary);
+}
+
+.personGold {
+  fill: #8a6a2a;
+}
+
+.bag {
+  fill: var(--color-accent);
+}
+
+.book {
+  fill: #fffaf0;
+}

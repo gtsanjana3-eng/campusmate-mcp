@@ -1,7 +1,7 @@
 .footer {
   padding-block: var(--space-8);
   font-size: var(--text-sm);
-  color: var(--color-text-muted);
-  background: var(--color-surface);
-  border-top: 1px solid var(--color-border);
+  color: var(--color-on-primary-muted);
+  background: var(--color-primary);
+  border-top: 3px solid var(--color-accent);
 }

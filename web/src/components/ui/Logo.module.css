@@ -1,9 +1,9 @@
 .mark {
   display: inline-grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
-  color: var(--color-on-primary);
-  background: var(--color-primary);
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--color-primary);
+  background: var(--color-accent);
   border-radius: var(--radius-md);
 }

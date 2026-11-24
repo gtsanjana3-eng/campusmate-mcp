@@ -3,7 +3,14 @@ import { describe, expect, it } from 'vitest';
 import { arrivalFacts, clientAddress } from '../api/routes.ts';
 import { createApp } from '../app.ts';
 import { createLoginLimiter } from './loginLimiter.ts';
-import { login, seededStore, TEST_PASSCODE, testApp, testEnv } from '../test/helpers.ts';
+import {
+  login,
+  seededStore,
+  TEST_OWNER_EMAIL,
+  TEST_OWNER_PASSWORD,
+  testApp,
+  testEnv,
+} from '../test/helpers.ts';
 
 function clock() {
   let t = 1_000_000;
@@ -48,7 +55,7 @@ const tryLogin = (app: ReturnType<typeof testApp>['app'], passcode: string) =>
   app.request('/api/session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ passcode }),
+    body: JSON.stringify({ email: TEST_OWNER_EMAIL, password: passcode }),
   });
 
 describe('POST /api/session with the limiter', () => {
@@ -56,7 +63,7 @@ describe('POST /api/session with the limiter', () => {
     const { app } = testApp();
     for (let i = 0; i < 5; i++) expect((await tryLogin(app, `wrong-guess-${i}`)).status).toBe(401);
 
-    const locked = await tryLogin(app, TEST_PASSCODE);
+    const locked = await tryLogin(app, TEST_OWNER_PASSWORD);
     expect(locked.status).toBe(429);
     expect(Number(locked.headers.get('retry-after'))).toBeGreaterThan(0);
     expect(locked.headers.get('set-cookie')).toBeNull();
@@ -75,28 +82,28 @@ const from = (app: ReturnType<typeof proxiedApp>, forwardedFor: string, passcode
   app.request('/api/session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': forwardedFor },
-    body: JSON.stringify({ passcode }),
+    body: JSON.stringify({ email: TEST_OWNER_EMAIL, password: passcode }),
   });
 
 describe('behind a trusted proxy (review M2)', () => {
   it('locks out only the guessing visitor, not the student behind the same proxy', async () => {
     const app = proxiedApp();
     for (let i = 0; i < 5; i++) await from(app, '203.0.113.7', `wrong-${i}`);
-    expect((await from(app, '203.0.113.7', TEST_PASSCODE)).status).toBe(429);
-    expect((await from(app, '198.51.100.20', TEST_PASSCODE)).status).toBe(204);
+    expect((await from(app, '203.0.113.7', TEST_OWNER_PASSWORD)).status).toBe(429);
+    expect((await from(app, '198.51.100.20', TEST_OWNER_PASSWORD)).status).toBe(204);
   });
 
   it('ignores addresses the visitor adds to X-Forwarded-For themselves', async () => {
     const app = proxiedApp();
     // The proxy appends the real address last; the fake ones on the left change nothing.
     for (let i = 0; i < 5; i++) await from(app, `10.0.0.${i}, 203.0.113.7`, `wrong-${i}`);
-    expect((await from(app, '1.2.3.4, 203.0.113.7', TEST_PASSCODE)).status).toBe(429);
+    expect((await from(app, '1.2.3.4, 203.0.113.7', TEST_OWNER_PASSWORD)).status).toBe(429);
   });
 
   it('is off by default: the header is not trusted without TRUST_PROXY_HOPS', async () => {
     const { app } = testApp();
     for (let i = 0; i < 5; i++) await from(app, `203.0.113.${i}`, `wrong-${i}`);
-    expect((await from(app, '198.51.100.20', TEST_PASSCODE)).status).toBe(429);
+    expect((await from(app, '198.51.100.20', TEST_OWNER_PASSWORD)).status).toBe(429);
   });
 });
 

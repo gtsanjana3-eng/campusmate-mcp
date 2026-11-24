@@ -111,8 +111,10 @@ secrets with:
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-The passcode needs at least 12 characters and no placeholder words. The server refuses to start
-with placeholder, short or repetitive values and names the variable at fault.
+`DASHBOARD_PASSCODE` is the **invite code** for creating dashboard accounts; it needs at least 12
+characters and no placeholder words. Optionally set `OWNER_EMAIL` and `OWNER_PASSWORD` for an
+account that is recreated at every start. The server refuses to start with placeholder, short or
+repetitive values and names the variable at fault.
 
 | Command              | What it does                                                                           |
 | -------------------- | -------------------------------------------------------------------------------------- |
@@ -122,8 +124,8 @@ with placeholder, short or repetitive values and names the variable at fault.
 | `npm start`          | Production: one process serves the dashboard, `/api` and `/mcp` on `PORT`              |
 | `npm run seed`       | Resets the database to the demo student                                                |
 
-For a production-like run: `npm run build && npm start`, then open http://localhost:8787 and log
-in with your passcode. The **Connect** page shows the MCP URL and token for Claude or the MCP
+For a production-like run: `npm run build && npm start`, then open http://localhost:8787. Sign in
+with the owner account, or choose **Create an account** and enter the invite code. The **Connect** page shows the MCP URL and token for Claude or the MCP
 Inspector. The database file (`./data/campusmate.db`) is created and seeded on first start.
 
 Environment variables are documented in [.env.example](.env.example) and

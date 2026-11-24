@@ -36,10 +36,15 @@ afterEach(() => {
 });
 
 describe('Today page', () => {
-  it('shows classes, what is due and exact attendance advice', async () => {
+  it('greets the student and shows classes, what is due, real counts and attendance advice', async () => {
     api();
     renderAt('/');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Today' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /, Ananya$/ })).toBeInTheDocument();
+    // Counts come from the same data as the lists below them.
+    expect(await screen.findByText('Classes today')).toBeInTheDocument();
+    expect(screen.getByText('Due in 3 days').nextElementSibling).toHaveTextContent(
+      String(fixtures.today.dueSoon.length),
+    );
     // Listed under both Classes and Attendance.
     expect(await screen.findAllByText('Operating Systems')).toHaveLength(2);
     expect(screen.getByText('CN Quiz 2 (Units 3–4)')).toBeInTheDocument();
@@ -230,6 +235,25 @@ describe('Approvals page', () => {
     api();
     renderAt('/approvals');
     expect(await screen.findByText('Nothing waiting for your approval.')).toBeInTheDocument();
+  });
+});
+
+describe('assistant hub', () => {
+  it("shows the assistant's real steps and questions to ask, without inventing a chat", async () => {
+    api();
+    renderAt('/assistant');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Your AI assistant' }),
+    ).toBeInTheDocument();
+    expect(await screen.findByText('In use')).toBeInTheDocument();
+    expect(screen.getByText('Read your attendance for OS.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy your day' })).toBeInTheDocument();
+  });
+
+  it('says plainly when the assistant has not been used yet', async () => {
+    api({ 'GET /api/activity': () => Response.json({ entries: [] }) });
+    renderAt('/assistant');
+    expect(await screen.findByText('Not used yet')).toBeInTheDocument();
   });
 });
 

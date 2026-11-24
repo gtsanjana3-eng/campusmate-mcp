@@ -13,7 +13,7 @@ host only holds the MCP bearer token, which `/api` does not accept. There is no 
 ```
  ┌────────────────────────────┐                  ┌────────────────────────────────┐
  │ AI host: Claude / Inspector│                  │ Student's browser: dashboard    │
- │ Connector URL + header:    │                  │ Login with passcode → httpOnly  │
+ │ Connector URL + header:    │                  │ Email + password → httpOnly     │
  │ Authorization: Bearer <tok>│                  │ session cookie                  │
  └─────────────┬──────────────┘                  └───────────────┬────────────────┘
                │ MCP: Streamable HTTP, POST /mcp                 │ REST JSON: /api/* (same origin)
@@ -101,10 +101,15 @@ Attendance maths, with `a` attended out of `h` held and minimum `m` (0.75):
 
 - Bearer token compared in constant time; DNS-rebinding protection from the SDK's Hono app, with
   allowed hosts set from `PUBLIC_URL`.
-- Session cookie: signed, httpOnly, Secure, SameSite=Strict, 12-hour lifetime; logging out revokes
-  every earlier session on the server. State-changing routes require JSON.
-- Login: 5 wrong passcodes lock that client out for 15 minutes; 30 failures from anyone pause all
-  logins. The server refuses to start with placeholder, short or repetitive secrets.
+- Accounts: email + password (scrypt hashes from `node:crypto`, constant-time checks; an unknown
+  email takes as long as a wrong password and gets the same message). Sign-up needs the invite code
+  (`DASHBOARD_PASSCODE`), because every account sees the one demo student's data. An optional owner
+  account (`OWNER_EMAIL`/`OWNER_PASSWORD`) is recreated at every start.
+- Session cookie: signed (user id + issue time), httpOnly, Secure, SameSite=Strict, 12-hour
+  lifetime; it ends when its account no longer exists, and logging out revokes every earlier
+  session on the server. State-changing routes require JSON.
+- Login and sign-up: 5 failed attempts (wrong password or invite code) lock that client out for 15
+  minutes; 30 failures from anyone pause all logins. The server refuses to start with placeholder, short or repetitive secrets.
 - API responses are `Cache-Control: no-store`; request bodies over 16 KB are refused.
 - At most 20 proposals can wait at once; history (activity, sent demo emails, past reminders,
   decided actions) is deleted after 30 days.

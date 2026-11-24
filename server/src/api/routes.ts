@@ -14,13 +14,18 @@ import type {
   SessionStatusResponse,
   TodayResponse,
 } from '../../../shared/types/index.ts';
+import { randomUUID } from 'node:crypto';
+import { getCookie } from 'hono/cookie';
 import {
   endSession,
-  passcodeMatches,
   requireJsonForWrites,
   requireSession,
+  secretMatches,
+  SESSION_COOKIE,
+  sessionUserId,
   startSession,
 } from '../auth/session.ts';
+import { hashPassword, UNUSED_HASH, verifyPassword } from '../lib/password.ts';
 import { createLoginLimiter, type LoginLimiter } from '../auth/loginLimiter.ts';
 import type { Env } from '../config/env.ts';
 import type { Store } from '../data/store.ts';
@@ -35,13 +40,22 @@ import {
   rejectAction,
 } from '../domain/approvals.ts';
 import type { CalendarIntegration } from '../domain/integrations.ts';
-import { unauthorized, validationError } from '../domain/errors.ts';
+import { AppError, conflict, unauthorized, validationError } from '../domain/errors.ts';
 import { log } from '../lib/logger.ts';
 import type { Mailer } from '../sources/mailer.ts';
 import { createIntegrationRoutes } from './integrations.ts';
 import { readJson } from './validate.ts';
 
-const SessionBody = z.object({ passcode: z.string().min(1).max(200) });
+const SessionBody = z.object({
+  email: z.string().trim().toLowerCase().max(200),
+  password: z.string().min(1).max(200),
+});
+const SignUpBody = z.object({
+  name: z.string().trim().min(1).max(80),
+  email: z.email().trim().toLowerCase().max(200),
+  password: z.string().min(12, 'Use at least 12 characters.').max(200),
+  inviteCode: z.string().min(1).max(200),
+});
 const AbilityBody = z.object({ enabled: z.boolean() });
 const EditEmailBody = z.object({
   subject: z.string().trim().min(3).max(120).optional(),
@@ -140,7 +154,45 @@ export function createApiRoutes(
   const api = new Hono();
   // Sessions issued before the last logout are rejected (audit M3).
   const sessionsValidFrom = () => Number(store.getSetting(SESSIONS_VALID_FROM) ?? 0);
-  const session = requireSession(env.SESSION_SECRET, sessionsValidFrom);
+  // A session also ends when its account is gone (for example after a database reset).
+  const session = requireSession(env.SESSION_SECRET, sessionsValidFrom, (id) =>
+    Boolean(store.getUser(id)),
+  );
+
+  // The owner account from settings is recreated on every start, so it survives resets.
+  if (env.OWNER_EMAIL && env.OWNER_PASSWORD) {
+    store.upsertUser(
+      {
+        id: 'owner',
+        email: env.OWNER_EMAIL,
+        name: env.OWNER_NAME ?? store.getSetting('student_name') ?? 'Student',
+        passwordHash: hashPassword(env.OWNER_PASSWORD),
+      },
+      now().toISOString(),
+    );
+  }
+
+  /** Answers 429 while this client is locked out; shared by log-in and sign-up (both guess secrets). */
+  const lockedOut = (c: Context, client: string) => {
+    const wait = limiter.retryAfterSeconds(client);
+    if (wait === 0) return null;
+    log.info('auth.login_locked', { retryAfterSeconds: wait });
+    c.header('Retry-After', String(wait));
+    return c.json<ApiErrorBody>(
+      {
+        error: {
+          code: 'too_many_attempts',
+          message: `Too many failed attempts. Try again in ${Math.ceil(wait / 60)} minutes.`,
+        },
+      },
+      429,
+    );
+  };
+
+  const recordFailure = (c: Context, client: string, event: string) => {
+    limiter.recordFailure(client);
+    log.info(event, { ...arrivalFacts(c, client), trustedHops: env.TRUST_PROXY_HOPS });
+  };
 
   api.use('*', requireJsonForWrites);
 
@@ -153,35 +205,45 @@ export function createApiRoutes(
 
   api.post('/session', async (c) => {
     const client = clientAddress(c, env.TRUST_PROXY_HOPS);
-    // Checked before the passcode, so a locked-out client learns nothing, even with the right one.
-    const wait = limiter.retryAfterSeconds(client);
-    if (wait > 0) {
-      log.info('auth.login_locked', { retryAfterSeconds: wait });
-      c.header('Retry-After', String(wait));
-      return c.json<ApiErrorBody>(
-        {
-          error: {
-            code: 'too_many_attempts',
-            message: `Too many wrong passcodes. Try again in ${Math.ceil(wait / 60)} minutes.`,
-          },
-        },
-        429,
-      );
-    }
+    // Checked before the password, so a locked-out client learns nothing, even with the right one.
+    const locked = lockedOut(c, client);
+    if (locked) return locked;
 
-    const { passcode } = await readJson(c, SessionBody);
-    if (!passcodeMatches(passcode, env.DASHBOARD_PASSCODE)) {
-      limiter.recordFailure(client);
-      log.info('auth.login_failed', {
-        ...arrivalFacts(c, client),
-        trustedHops: env.TRUST_PROXY_HOPS,
-      });
-      throw unauthorized();
+    const { email, password } = await readJson(c, SessionBody);
+    const user = store.findUserByEmail(email);
+    // An unknown email costs the same hashing time as a wrong password, so neither reveals which.
+    const ok = verifyPassword(password, user?.passwordHash ?? UNUSED_HASH) && user;
+    if (!ok) {
+      recordFailure(c, client, 'auth.login_failed');
+      throw new AppError('unauthorized', 401, 'That email or password is not right.');
     }
     limiter.recordSuccess(client);
-    startSession(c, env.SESSION_SECRET);
+    startSession(c, env.SESSION_SECRET, ok.id);
     log.info('auth.login');
     return c.body(null, 204);
+  });
+
+  // Sign-up needs the invite code (DASHBOARD_PASSCODE): the dashboard shows one student's data.
+  api.post('/users', async (c) => {
+    const client = clientAddress(c, env.TRUST_PROXY_HOPS);
+    const locked = lockedOut(c, client);
+    if (locked) return locked;
+
+    const { name, email, password, inviteCode } = await readJson(c, SignUpBody);
+    if (!secretMatches(inviteCode, env.DASHBOARD_PASSCODE)) {
+      recordFailure(c, client, 'auth.signup_failed');
+      throw new AppError('unauthorized', 401, 'That invite code is not right.');
+    }
+    const id = `u-${randomUUID()}`;
+    const created = store.createUser(
+      { id, email, name, passwordHash: hashPassword(password) },
+      now().toISOString(),
+    );
+    if (!created) throw conflict('An account with that email already exists. Log in instead.');
+    limiter.recordSuccess(client);
+    startSession(c, env.SESSION_SECRET, id);
+    log.info('auth.signup');
+    return c.json({ created: true }, 201);
   });
 
   // Logging out ends every session on the server, so a copied cookie stops working too.
@@ -194,15 +256,19 @@ export function createApiRoutes(
   });
 
   // Everything below needs a logged-in student.
-  api.get('/session', session, (c) =>
-    c.json<SessionStatusResponse>({
+  api.get('/session', session, (c) => {
+    const id = sessionUserId(getCookie(c, SESSION_COOKIE), env.SESSION_SECRET);
+    const user = id ? store.getUser(id) : undefined;
+    if (!user) throw unauthorized();
+    return c.json<SessionStatusResponse>({
       authenticated: true,
+      user: { name: user.name, email: user.email },
       student: {
         name: store.getSetting('student_name') ?? 'Student',
         college: store.getSetting('college_name') ?? '',
       },
-    }),
-  );
+    });
+  });
 
   // The dashboard reads the same data the MCP tools use, through the same domain functions.
   api.get('/today', session, (c) => {

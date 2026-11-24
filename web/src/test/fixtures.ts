@@ -113,5 +113,6 @@ export const abilities: Ability[] = [
 
 export const session: SessionStatusResponse = {
   authenticated: true,
+  user: { name: 'Ananya', email: 'ananya@college.test' },
   student: { name: 'Ananya', college: 'Demo Institute of Technology' },
 };

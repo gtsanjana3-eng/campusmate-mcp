@@ -1,4 +1,4 @@
--- CampusMate schema (12 tables). Applied with CREATE IF NOT EXISTS on every start.
+-- CampusMate schema (13 tables). Applied with CREATE IF NOT EXISTS on every start.
 
 CREATE TABLE IF NOT EXISTS settings (
   key   TEXT PRIMARY KEY,
@@ -107,4 +107,14 @@ CREATE TABLE IF NOT EXISTS integrations (
   status            TEXT NOT NULL CHECK (status IN ('connected', 'needs_reconnect')),
   connected_at      TEXT NOT NULL,
   updated_at        TEXT NOT NULL
+);
+
+-- Dashboard accounts. Passwords are stored only as scrypt hashes (lib/password.ts). Every account
+-- sees the same demo student's data; accounts exist to know who is signed in.
+CREATE TABLE IF NOT EXISTS users (
+  id            TEXT PRIMARY KEY,
+  email         TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  name          TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at    TEXT NOT NULL
 );

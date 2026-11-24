@@ -16,8 +16,14 @@ services:
         generateValue: true
       - key: SESSION_SECRET
         generateValue: true
-      # The student's dashboard passcode: typed in by you when the Blueprint is created.
+      # Invite code for creating dashboard accounts (sign-up page). Set it in the Render dashboard.
       - key: DASHBOARD_PASSCODE
+        sync: false
+      # Owner account, recreated at every start so it survives the free plan's database resets.
+      # Set both in the Render dashboard (password: at least 12 random characters), or neither.
+      - key: OWNER_EMAIL
+        sync: false
+      - key: OWNER_PASSWORD
         sync: false
       # Free services have no persistent disk: the demo database is re-seeded on every restart.
       - key: DATABASE_PATH

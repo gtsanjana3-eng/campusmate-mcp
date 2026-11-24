@@ -17,12 +17,15 @@ npm run check   # lint, format check, type checks, all tests, production build
 
 1. Push the repository to GitHub.
 2. In Render: **New → Blueprint**, pick the repository. Render reads `render.yaml`.
-3. When asked, type a **DASHBOARD_PASSCODE**: at least 12 random characters. This is what the
-   student types to open the dashboard. Leave GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET empty
-   unless you set up Google Calendar (see `docs/integrations.md`).
+3. When asked, type a **DASHBOARD_PASSCODE**: at least 12 random characters. This is the **invite
+   code** for the sign-up page. Also set **OWNER_EMAIL** and **OWNER_PASSWORD** (12+ varied
+   characters): that account is recreated at every start, so it survives the free plan's resets.
+   Leave GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET empty unless you set up Google Calendar.
 4. Render generates `MCP_TOKEN` and `SESSION_SECRET` (random 256-bit values) and builds with
    `npm ci && npm run build`, then starts `npm start`. The health check is `/api/health`.
-5. When the deploy is live, open `https://<service>.onrender.com`, log in, and open **Connect**. It
+5. When the deploy is live, open `https://<service>.onrender.com`, sign in with the owner account,
+   and open **Connect**. Accounts created on the sign-up page are lost when the free instance
+   restarts or sleeps; the owner account is not. It
    shows the MCP URL and token to paste into Claude.
 
 **If the first deploy fails with `DASHBOARD_PASSCODE: Invalid input`**, the passcode was left empty

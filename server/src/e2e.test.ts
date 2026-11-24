@@ -14,7 +14,15 @@ import type {
 import { createApp } from './app.ts';
 import { parseEnv } from './config/env.ts';
 import { fakeGoogle } from './test/fakeGoogle.ts';
-import { seededStore, TEST_NOW, TEST_PASSCODE, testEnv } from './test/helpers.ts';
+import {
+  ownerLogin,
+  seededStore,
+  TEST_NOW,
+  TEST_OWNER_EMAIL,
+  TEST_OWNER_PASSWORD,
+  TEST_PASSCODE,
+  testEnv,
+} from './test/helpers.ts';
 
 /*
  * End-to-end journeys over real HTTP: a real server on a local port, the official MCP client
@@ -36,6 +44,8 @@ const env = parseEnv({
   PUBLIC_URL: 'http://localhost:8787',
   GOOGLE_CLIENT_ID: 'e2e-client-id',
   GOOGLE_CLIENT_SECRET: 'e2e-client-secret',
+  OWNER_EMAIL: TEST_OWNER_EMAIL,
+  OWNER_PASSWORD: TEST_OWNER_PASSWORD,
 });
 
 /** What the dashboard does: JSON requests with the session cookie. */
@@ -74,7 +84,7 @@ beforeAll(async () => {
   const login = await fetch(`${base}/api/session`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ passcode: TEST_PASSCODE }),
+    body: ownerLogin(),
   });
   cookie = login.headers.get('set-cookie')?.split(';')[0] ?? '';
   const { data: connect } = await dashboard<ConnectResponse>('/api/connect');

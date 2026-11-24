@@ -55,3 +55,10 @@
   color: var(--color-text);
   overflow-wrap: anywhere;
 }
+
+.lastRun {
+  display: block;
+  margin-top: var(--space-1);
+  font-weight: var(--weight-medium);
+  color: var(--color-accent-text);
+}

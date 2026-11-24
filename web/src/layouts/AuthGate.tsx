@@ -44,11 +44,13 @@ export function AuthGate() {
           <span className={styles.name}>{name}</span>
           {college && <span className={styles.college}>{college}</span>}
         </span>
+        <span className={styles.signedIn}>Signed in as {session.data.user.name}</span>
         <p className={styles.demo}>
           <strong>Demo</strong> {DEMO_NOTICE}
         </p>
       </section>
-      <Outlet />
+      {/* Pages read the signed-in session with useOutletContext. */}
+      <Outlet context={session.data} />
     </>
   );
 }

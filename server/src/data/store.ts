@@ -16,6 +16,9 @@ import type {
 
 const SCHEMA = readFileSync(new URL('./schema.sql', import.meta.url), 'utf8');
 
+/** A dashboard account. `passwordHash` never leaves the server. */
+export type UserRecord = { id: string; email: string; name: string; passwordHash: string };
+
 /** Subject with the faculty email; the email never leaves the server except into the outbox. */
 export type SubjectRecord = {
   code: string;
@@ -146,6 +149,35 @@ export function createStore(path: string) {
       const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as
         { value: string } | undefined;
       return row?.value;
+    },
+
+    findUserByEmail(email: string): UserRecord | undefined {
+      return db
+        .prepare('SELECT id, email, name, password_hash AS passwordHash FROM users WHERE email = ?')
+        .get(email) as UserRecord | undefined;
+    },
+
+    getUser(id: string): UserRecord | undefined {
+      return db
+        .prepare('SELECT id, email, name, password_hash AS passwordHash FROM users WHERE id = ?')
+        .get(id) as UserRecord | undefined;
+    },
+
+    /** Inserts a user; returns false when the email is already taken. */
+    createUser(user: UserRecord, now: string): boolean {
+      const result = db
+        .prepare(
+          'INSERT INTO users (id, email, name, password_hash, created_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(email) DO NOTHING',
+        )
+        .run(user.id, user.email, user.name, user.passwordHash, now);
+      return result.changes === 1;
+    },
+
+    /** The owner account from settings: created, or its name and password refreshed, on every start. */
+    upsertUser(user: UserRecord, now: string): void {
+      db.prepare(
+        'INSERT INTO users (id, email, name, password_hash, created_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(email) DO UPDATE SET name = excluded.name, password_hash = excluded.password_hash',
+      ).run(user.id, user.email, user.name, user.passwordHash, now);
     },
 
     listAbilities(): Ability[] {

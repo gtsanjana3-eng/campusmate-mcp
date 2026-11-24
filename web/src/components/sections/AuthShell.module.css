@@ -1,0 +1,107 @@
+.shell {
+  display: grid;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  overflow: hidden;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* Left: the campus story on deep green. */
+.story {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--container-gutter);
+  color: var(--color-on-primary-muted);
+  background: var(--color-primary);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-on-primary);
+}
+
+.brandTag {
+  color: var(--color-accent);
+}
+
+.headline {
+  font-size: var(--text-2xl);
+  color: var(--color-on-primary);
+}
+
+.lead {
+  max-width: 34rem;
+}
+
+.art {
+  border: 3px solid var(--color-accent);
+  border-radius: var(--radius-lg);
+}
+
+.features {
+  display: grid;
+  gap: var(--space-2);
+  padding-left: var(--space-6);
+}
+
+.features strong {
+  color: var(--color-accent-on-primary);
+}
+
+.demo {
+  font-size: var(--text-sm);
+}
+
+.demo a {
+  color: var(--color-on-primary);
+}
+
+/* Right: an elegant cream card holding the form. First on phones, so nobody scrolls to sign in. */
+.formSide {
+  order: -1;
+  display: grid;
+  place-items: center;
+  padding: var(--space-8) var(--container-gutter);
+  background: var(--color-page);
+}
+
+.card {
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 26rem;
+  padding: var(--space-8) var(--space-6);
+  background: #fffcf5;
+  border: 1px solid var(--color-border);
+  border-top: 4px solid var(--color-accent);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.title {
+  font-size: var(--text-2xl);
+}
+
+@media (min-width: 64rem) {
+  .shell {
+    grid-template-columns: 1.1fr 1fr;
+    min-height: 40rem;
+  }
+
+  .story {
+    padding: var(--space-12);
+  }
+
+  .formSide {
+    order: 0;
+  }
+}

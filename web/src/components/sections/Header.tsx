@@ -13,7 +13,8 @@ export function Header() {
   // Storing the path the menu was opened on closes it automatically after navigation.
   const [openOnPath, setOpenOnPath] = useState<string | null>(null);
   const isMenuOpen = openOnPath === pathname;
-  const isLoginPage = pathname === ROUTES.login;
+  // Logged-out pages: no navigation and no polling.
+  const isLoginPage = pathname === ROUTES.login || pathname === ROUTES.signup;
   const { count: pendingCount, announcement } = usePendingCount(!isLoginPage);
 
   useEffect(() => {
@@ -30,7 +31,9 @@ export function Header() {
       <div className={`container ${styles.inner}`}>
         <Link to={ROUTES.home} className={styles.brand}>
           <Logo />
-          {SITE_NAME}
+          <span>
+            {SITE_NAME} <span className={styles.brandTag}>MCP</span>
+          </span>
         </Link>
 
         {!isLoginPage && (

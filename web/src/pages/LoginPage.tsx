@@ -1,19 +1,20 @@
 import { useState, type FormEvent } from 'react';
-import { useLocation, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
+import { AuthShell } from '@/components/sections/AuthShell';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { TextField } from '@/components/ui/TextField';
 import { ROUTES } from '@/config/routes';
-import { REPOSITORY_URL, SITE_DESCRIPTION, SITE_NAME } from '@/config/site';
+import { REPOSITORY_URL } from '@/config/site';
+import { authErrorMessage } from '@/lib/authErrors';
 import { pageTitle } from '@/lib/pageTitle';
-import { ApiError } from '@/services/apiClient';
 import { login } from '@/services/sessionService';
-import styles from './LoginPage.module.css';
+import styles from './AuthPage.module.css';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [passcode, setPasscode] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -21,79 +22,58 @@ export default function LoginPage() {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!passcode.trim()) {
-      setError('Enter your passcode.');
+    if (!email.trim() || !password) {
+      setError('Enter your email and password.');
       return;
     }
     setIsSubmitting(true);
     setError('');
     try {
-      await login(passcode);
+      await login(email.trim(), password);
       await navigate(returnTo, { replace: true });
     } catch (caught) {
-      if (caught instanceof ApiError && caught.status === 401) {
-        setError('That passcode is not right. Try again.');
-      } else if (caught instanceof ApiError && caught.status === 429) {
-        // The server's message says how long to wait.
-        setError(caught.message);
-      } else {
-        setError('CampusMate could not be reached. Check your connection and try again.');
-      }
+      setError(authErrorMessage(caught));
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className={`container ${styles.page}`}>
-      <title>{pageTitle('Log in')}</title>
-      <Card className={styles.card}>
-        <h1 className={styles.heading}>Log in to {SITE_NAME}</h1>
-        <p className={styles.lead}>
-          Your dashboard is where you approve what the AI wants to do and choose what it may access.
-        </p>
-        <form className={styles.form} onSubmit={(event) => void submit(event)} noValidate>
-          <TextField
-            label="Passcode"
-            type="password"
-            autoComplete="current-password"
-            value={passcode}
-            onChange={(event) => setPasscode(event.target.value)}
-            error={error}
-            required
-          />
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Logging in…' : 'Log in'}
-          </Button>
-        </form>
-      </Card>
-
-      <section className={styles.about} aria-labelledby="about-heading">
-        <h2 id="about-heading" className={styles.aboutHeading}>
-          What is {SITE_NAME}?
-        </h2>
-        <p>{SITE_DESCRIPTION}</p>
-        <ul className={styles.points}>
-          <li>
-            <strong>Reads instantly.</strong> Your AI assistant (for example Claude) connects
-            through MCP and answers from your timetable, deadlines, attendance and notices.
-          </li>
-          <li>
-            <strong>Only suggests actions.</strong> Faculty emails, reminders and new deadlines wait
-            here as cards.
-          </li>
-          <li>
-            <strong>You decide.</strong> Approve, edit or reject each one, and switch off anything
-            the assistant may use.
-          </li>
-        </ul>
-        <p className={styles.note}>
-          This demo uses a sample student&apos;s data; emails go to a demo outbox.{' '}
-          <a href={REPOSITORY_URL} target="_blank" rel="noopener noreferrer">
-            Source code and documentation
-          </a>
-          .
-        </p>
-      </section>
-    </div>
+    <AuthShell title="Sign in">
+      <title>{pageTitle('Sign in')}</title>
+      <p className={styles.lead}>
+        Welcome back. Sign in to see your day and approve what your AI assistant wants to do.
+      </p>
+      <form className={styles.form} onSubmit={(event) => void submit(event)} noValidate>
+        <TextField
+          label="Email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          required
+        />
+        <TextField
+          label="Password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          error={error}
+          required
+        />
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Signing in…' : 'Sign in'}
+        </Button>
+      </form>
+      <p className={styles.links}>
+        New here? <Link to={ROUTES.signup}>Create an account</Link>
+      </p>
+      <p className={styles.help}>
+        Need help?{' '}
+        <a href={`${REPOSITORY_URL}#readme`} target="_blank" rel="noopener noreferrer">
+          Read the setup guide
+        </a>
+      </p>
+    </AuthShell>
   );
 }

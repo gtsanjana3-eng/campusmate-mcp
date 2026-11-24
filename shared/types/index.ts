@@ -158,12 +158,23 @@ export interface ApiErrorBody {
 }
 
 export interface SessionRequest {
-  passcode: string;
+  email: string;
+  password: string;
+}
+
+/** POST /api/users: sign-up needs the invite code the server owner shares. */
+export interface SignUpRequest {
+  name: string;
+  email: string;
+  password: string;
+  inviteCode: string;
 }
 
 /** GET /api/session — lets the dashboard check whether its cookie is still valid. */
 export interface SessionStatusResponse {
   authenticated: true;
+  /** The signed-in account. */
+  user: { name: string; email: string };
   /** Who the dashboard belongs to, from the server's settings (demo data in this deployment). */
   student: { name: string; college: string };
 }

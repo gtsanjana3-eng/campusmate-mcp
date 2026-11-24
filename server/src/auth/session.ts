@@ -13,36 +13,41 @@ const sign = (secret: string, payload: string) =>
 const sameDigest = (a: string, b: string) =>
   timingSafeEqual(createHash('sha256').update(a).digest(), createHash('sha256').update(b).digest());
 
-/** Cookie value: `<issued at, ms>.<HMAC of issued at>`. Holds no personal data. */
-export function createSessionValue(secret: string, nowMs = Date.now()): string {
-  const issued = String(nowMs);
-  return `${issued}.${sign(secret, issued)}`;
+/** Cookie value: `<user id>.<issued at, ms>.<HMAC of both>`. Holds no personal data. */
+export function createSessionValue(secret: string, userId: string, nowMs = Date.now()): string {
+  const payload = `${userId}.${nowMs}`;
+  return `${payload}.${sign(secret, payload)}`;
 }
 
 /**
- * Valid when correctly signed, younger than the TTL, and issued at or after `validFromMs`. Logging
- * out moves `validFromMs` forward on the server, so a copied cookie stops working (audit M3).
+ * The signed-in user's id when the cookie is correctly signed, younger than the TTL, and issued at
+ * or after `validFromMs`; otherwise null. Logging out moves `validFromMs` forward on the server, so
+ * a copied cookie stops working (audit M3).
  */
-export function isValidSession(
+export function sessionUserId(
   value: string | undefined,
   secret: string,
   nowMs = Date.now(),
   validFromMs = 0,
-) {
-  if (!value) return false;
-  const [issued, signature, extra] = value.split('.');
-  if (!issued || !signature || extra !== undefined || !/^\d+$/.test(issued)) return false;
-  if (!sameDigest(signature, sign(secret, issued))) return false;
+): string | null {
+  if (!value) return null;
+  const [userId, issued, signature, extra] = value.split('.');
+  if (!userId || !issued || !signature || extra !== undefined || !/^\d+$/.test(issued)) return null;
+  if (!sameDigest(signature, sign(secret, `${userId}.${issued}`))) return null;
   const issuedMs = Number(issued);
-  return (
-    issuedMs >= validFromMs && issuedMs + SESSION_TTL_SECONDS * 1000 > nowMs && issuedMs <= nowMs
-  );
+  const fresh =
+    issuedMs >= validFromMs && issuedMs + SESSION_TTL_SECONDS * 1000 > nowMs && issuedMs <= nowMs;
+  return fresh ? userId : null;
 }
 
-export const passcodeMatches = (given: string, expected: string) => sameDigest(given, expected);
+export const isValidSession = (...args: Parameters<typeof sessionUserId>) =>
+  sessionUserId(...args) !== null;
 
-export function startSession(c: Context, secret: string, nowMs = Date.now()) {
-  setCookie(c, SESSION_COOKIE, createSessionValue(secret, nowMs), {
+/** Constant-time comparison for shared secrets such as the invite code. */
+export const secretMatches = (given: string, expected: string) => sameDigest(given, expected);
+
+export function startSession(c: Context, secret: string, userId: string, nowMs = Date.now()) {
+  setCookie(c, SESSION_COOKIE, createSessionValue(secret, userId, nowMs), {
     httpOnly: true,
     secure: true,
     sameSite: 'Strict',
@@ -56,11 +61,14 @@ export function endSession(c: Context) {
 }
 
 /** `validFromMs` reads the server-side revocation point (see logout). */
-export function requireSession(secret: string, validFromMs: () => number): MiddlewareHandler {
+export function requireSession(
+  secret: string,
+  validFromMs: () => number,
+  userExists: (id: string) => boolean = () => true,
+): MiddlewareHandler {
   return async (c, next) => {
-    if (!isValidSession(getCookie(c, SESSION_COOKIE), secret, Date.now(), validFromMs())) {
-      throw unauthorized();
-    }
+    const id = sessionUserId(getCookie(c, SESSION_COOKIE), secret, Date.now(), validFromMs());
+    if (!id || !userExists(id)) throw unauthorized();
     await next();
   };
 }

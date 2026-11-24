@@ -1,0 +1,120 @@
+.page {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.top {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.status,
+.prompts {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+}
+
+.status {
+  align-self: start;
+  background: var(--color-primary-soft);
+}
+
+.cardTitle {
+  font-size: var(--text-xl);
+}
+
+.note {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-primary);
+}
+
+.dotOn,
+.dotOff {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+}
+
+.dotOn {
+  background: var(--color-success);
+  box-shadow: 0 0 0 4px var(--color-success-bg);
+}
+
+.dotOff {
+  background: var(--color-text-muted);
+}
+
+.timelineHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+/* A conversation-style timeline: the assistant's steps on the left, the student's on the right. */
+.timeline {
+  display: grid;
+  gap: var(--space-3);
+  max-width: var(--content-max);
+  padding: 0;
+  list-style: none;
+}
+
+.fromAi,
+.fromYou {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 44rem;
+}
+
+.fromYou {
+  justify-self: end;
+  text-align: right;
+}
+
+.who {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-accent-text);
+}
+
+.bubble {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.fromYou .bubble {
+  justify-items: end;
+  background: var(--color-primary-soft);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg);
+}
+
+.meta {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+@media (min-width: 64rem) {
+  .top {
+    grid-template-columns: 1fr 1.6fr;
+  }
+}

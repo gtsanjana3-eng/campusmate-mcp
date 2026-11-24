@@ -5,7 +5,7 @@
 
 ## J0: First-time setup
 
-1. Open the dashboard, log in with the passcode.
+1. Open the dashboard and sign in (owner account, or create one with the invite code).
 2. Open **Connect**, copy the MCP URL and token.
 3. In Claude: Customize → Connectors → Add custom connector → paste the URL, add header
    `Authorization: Bearer <token>`.

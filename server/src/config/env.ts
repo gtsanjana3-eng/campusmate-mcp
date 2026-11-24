@@ -41,10 +41,21 @@ const EnvSchema = z
     // Optional: Google Calendar for approved reminders. Leave both empty to keep reminders in CampusMate only.
     GOOGLE_CLIENT_ID: optionalText,
     GOOGLE_CLIENT_SECRET: optionalText,
+    // Optional owner account, (re)created at every start so it survives a database reset.
+    OWNER_EMAIL: z.preprocess((v) => (v === '' ? undefined : v), z.email().optional()),
+    OWNER_PASSWORD: z.preprocess(
+      (v) => (v === '' ? undefined : v),
+      secret('OWNER_PASSWORD', 12).optional(),
+    ),
+    OWNER_NAME: optionalText,
   })
   .refine((env) => Boolean(env.GOOGLE_CLIENT_ID) === Boolean(env.GOOGLE_CLIENT_SECRET), {
     message: 'Set both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, or neither',
     path: ['GOOGLE_CLIENT_ID'],
+  })
+  .refine((env) => Boolean(env.OWNER_EMAIL) === Boolean(env.OWNER_PASSWORD), {
+    message: 'Set both OWNER_EMAIL and OWNER_PASSWORD, or neither',
+    path: ['OWNER_EMAIL'],
   });
 
 export type Env = z.infer<typeof EnvSchema>;

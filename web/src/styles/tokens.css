@@ -6,29 +6,37 @@
  *   desktop min-width: 64rem  (1024px)
  */
 :root {
-  /* Color: brand */
-  --color-primary: #2952cc;
-  --color-primary-hover: #1f3fa3;
+  /* Color: brand — deep forest green with gold accents (university campus) */
+  --color-primary: #1d4a37;
+  --color-primary-hover: #143528;
+  --color-primary-soft: #e6efe8;
   --color-on-primary: #ffffff;
+  --color-on-primary-muted: #d8e4dc;
+  --color-accent: #c9a24b; /* gold: decoration, borders, badges on green */
+  --color-accent-text: #7d5a14; /* gold dark enough for text on cream (≥ 4.5:1) */
+  --color-accent-soft: #f6ecd2;
+  --color-accent-on-primary: #ecd293; /* gold for text on deep green (≥ 4.5:1) */
 
-  /* Color: neutrals (text contrast on --color-bg is at least 4.5:1) */
-  --color-bg: #ffffff;
-  --color-surface: #f5f7fa;
-  --color-border: #d5dae1;
-  --color-text: #1a1f29;
-  --color-text-muted: #4f5866;
+  /* Color: neutrals (text contrast on --color-page and --color-bg is at least 4.5:1) */
+  --color-page: #f8f3e8; /* warm cream page background */
+  --color-bg: #ffffff; /* cards */
+  --color-surface: #f3ede0;
+  --color-border: #e2d9c6;
+  --color-text: #1c2a23;
+  --color-text-muted: #55605a;
 
   /* Color: feedback */
   --color-danger: #b42318;
   --color-danger-bg: #fef3f2;
-  --color-success: #067647;
-  --color-success-bg: #ecfdf3;
-  --color-warning: #93370d;
-  --color-warning-bg: #fffaeb;
-  --color-info-bg: #eef4ff;
-  --color-focus: #2952cc;
+  --color-success: #12613d;
+  --color-success-bg: #e8f3ec;
+  --color-warning: #8a3a0d;
+  --color-warning-bg: #fdf3dc;
+  --color-info-bg: #e6efe8;
+  --color-focus: #b07d1a;
 
-  /* Typography */
+  /* Typography: an elegant serif for headings, a clean sans for reading */
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
   --text-sm: 0.875rem;
@@ -64,8 +72,8 @@
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 1rem;
-  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.1);
-  --shadow-md: 0 4px 8px -2px rgb(16 24 40 / 0.1), 0 2px 4px -2px rgb(16 24 40 / 0.06);
+  --shadow-sm: 0 1px 2px rgb(60 45 20 / 0.05), 0 2px 6px rgb(60 45 20 / 0.06);
+  --shadow-md: 0 8px 24px -8px rgb(60 45 20 / 0.18), 0 2px 6px rgb(60 45 20 / 0.06);
 
   /* Motion */
   --duration-fast: 150ms;

@@ -35,6 +35,12 @@
   color: var(--color-text-muted);
 }
 
+.signedIn {
+  margin-left: auto;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
 .demo {
   flex-basis: 100%;
   font-size: var(--text-sm);

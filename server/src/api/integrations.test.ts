@@ -17,6 +17,8 @@ const googleEnv = parseEnv({
   PUBLIC_URL: testEnv.PUBLIC_URL,
   GOOGLE_CLIENT_ID: 'test-client-id',
   GOOGLE_CLIENT_SECRET: 'test-client-secret',
+  OWNER_EMAIL: testEnv.OWNER_EMAIL,
+  OWNER_PASSWORD: testEnv.OWNER_PASSWORD,
 });
 
 async function setup(options: { configured?: boolean } = {}) {

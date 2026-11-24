@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -38,14 +38,13 @@ describe('logged out', () => {
     });
 
     const router = renderAt('/connect');
-    expect(
-      await screen.findByRole('heading', { name: 'Log in to CampusMate' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');
     expect(screen.queryByRole('navigation', { name: 'Primary' })).not.toBeInTheDocument();
 
-    await userEvent.type(screen.getByLabelText('Passcode'), 'letmein');
-    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    await userEvent.type(screen.getByLabelText('Email'), 'ananya@college.test');
+    await userEvent.type(screen.getByLabelText('Password'), 'a-long-password-1');
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
     expect(
       await screen.findByRole('heading', { name: 'Connect CampusMate to your AI assistant' }),
@@ -53,34 +52,86 @@ describe('logged out', () => {
     expect(router.state.location.pathname).toBe('/connect');
   });
 
-  it('shows a clear message for a wrong passcode', async () => {
+  it("shows the server's message for a wrong email or password", async () => {
     mockApi({
       'GET /api/session': unauthorizedResponse,
-      'POST /api/session': unauthorizedResponse,
+      'POST /api/session': () =>
+        Response.json(
+          { error: { code: 'unauthorized', message: 'That email or password is not right.' } },
+          { status: 401 },
+        ),
     });
     renderAt('/login');
-    await userEvent.type(await screen.findByLabelText('Passcode'), 'wrong');
-    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    await screen.findByLabelText('Email');
+    await userEvent.type(screen.getByLabelText('Email'), 'ananya@college.test');
+    await userEvent.type(screen.getByLabelText('Password'), 'a-long-password-1');
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('That passcode is not right');
-    expect(screen.getByLabelText('Passcode')).toHaveAttribute('aria-invalid', 'true');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'That email or password is not right.',
+    );
+    expect(screen.getByLabelText('Password')).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('creates an account with the invite code and opens the dashboard', async () => {
+    let signedUp = false;
+    const fetchMock = mockApi({
+      'GET /api/session': () =>
+        signedUp ? Response.json(fixtures.session) : unauthorizedResponse(),
+      'POST /api/users': () => {
+        signedUp = true;
+        return Response.json({ created: true }, { status: 201 });
+      },
+    });
+    const router = renderAt('/login');
+    await userEvent.click(await screen.findByRole('link', { name: 'Create an account' }));
+    await userEvent.type(await screen.findByLabelText('Your name'), 'Ravi');
+    await userEvent.type(screen.getByLabelText('Email'), 'ravi@college.test');
+    await userEvent.type(screen.getByLabelText(/^Password/), 'ravi-strong-pass-31');
+    await userEvent.type(screen.getByLabelText('Invite code'), 'the-invite-code');
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/'));
+    const call = fetchMock.mock.calls.find(
+      ([url, init]) => url === '/api/users' && init?.method === 'POST',
+    );
+    expect(JSON.parse(String(call?.[1]?.body))).toEqual({
+      name: 'Ravi',
+      email: 'ravi@college.test',
+      password: 'ravi-strong-pass-31',
+      inviteCode: 'the-invite-code',
+    });
+  });
+
+  it('checks the password length before calling the server', async () => {
+    const fetchMock = mockApi({ 'GET /api/session': unauthorizedResponse });
+    renderAt('/signup');
+    await userEvent.type(await screen.findByLabelText('Your name'), 'Ravi');
+    await userEvent.type(screen.getByLabelText('Email'), 'ravi@college.test');
+    await userEvent.type(screen.getByLabelText(/^Password/), 'short');
+    await userEvent.type(screen.getByLabelText('Invite code'), 'code');
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('at least 12 characters');
+    expect(fetchMock.mock.calls.some(([url]) => url === '/api/users')).toBe(false);
   });
 
   it('explains what CampusMate is to visitors who are not logged in', async () => {
     mockApi({ 'GET /api/session': unauthorizedResponse });
     renderAt('/login');
-    const about = await screen.findByRole('region', { name: 'What is CampusMate?' });
+    const about = await screen.findByRole('region', {
+      name: 'Your campus life, inside your AI assistant.',
+    });
     expect(within(about).getByText(/Only suggests actions/)).toBeInTheDocument();
     expect(
       within(about).getByRole('link', { name: 'Source code and documentation' }),
     ).toHaveAttribute('href', 'https://github.com/gtsanjana3-eng/campusmate-mcp');
   });
 
-  it('asks for a passcode before calling the server', async () => {
+  it('asks for an email and password before calling the server', async () => {
     const fetchMock = mockApi({});
     renderAt('/login');
-    await userEvent.click(await screen.findByRole('button', { name: 'Log in' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Enter your passcode.');
+    await userEvent.click(await screen.findByRole('button', { name: 'Sign in' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Enter your email and password.');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
@@ -95,17 +146,17 @@ const loggedInApi = () =>
   });
 
 describe('logged in', () => {
-  it('opens Today from the home route, with every page in the navigation', async () => {
+  it('opens the dashboard from the home route, with every page in the navigation', async () => {
     loggedInApi();
     renderAt('/');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Today' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /, Ananya$/ })).toBeInTheDocument();
     const nav = screen.getByRole('navigation', { name: 'Primary' });
     expect(
       within(nav)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Today', 'Approvals', 'Activity', 'Permissions', 'Connect']);
-    expect(within(nav).getByRole('link', { name: 'Today' })).toHaveAttribute(
+    ).toEqual(['Dashboard', 'Assistant', 'Approvals', 'MCP tools', 'Activity', 'Connect']);
+    expect(within(nav).getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -157,9 +208,7 @@ describe('logged in', () => {
     const fetchMock = loggedInApi();
     const router = renderAt('/connect');
     await userEvent.click(await screen.findByRole('button', { name: 'Log out' }));
-    expect(
-      await screen.findByRole('heading', { name: 'Log in to CampusMate' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/session',
@@ -201,8 +250,9 @@ describe('login lockout', () => {
         ),
     });
     renderAt('/login');
-    await userEvent.type(await screen.findByLabelText('Passcode'), 'another-guess');
-    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    await userEvent.type(await screen.findByLabelText('Email'), 'ananya@college.test');
+    await userEvent.type(screen.getByLabelText('Password'), 'another-guess-12');
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Try again in 15 minutes');
   });
 });
