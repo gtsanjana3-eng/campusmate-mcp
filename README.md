@@ -152,9 +152,8 @@ instructions, free-plan limits and rollback: [docs/deployment.md](docs/deploymen
 - **Free hosting:** the live instance sleeps after 15 minutes idle and starts from fresh demo data
   on every restart (no persistent disk). See the demo-day checklist in
   [docs/deployment.md](docs/deployment.md#demo-day-checklist-free-plan).
-- **Login lockout behind Render's proxy** may still be shared by all visitors: the live check
-  found three proxy entries, not one, so the right `TRUST_PROXY_HOPS` value is not yet confirmed
-  (see [docs/deployment.md](docs/deployment.md)). Share the passcode only with the presenters.
+- **Login lockout on Render** counts per visitor (`TRUST_PROXY_HOPS=3`, confirmed from the live
+  log; see [docs/deployment.md](docs/deployment.md)). It needs re-checking if the hosting changes.
 - **Google Calendar** is tested only against a simulated Google; it is off on the live demo.
 - **Not yet verified live:** a session inside Claude and the logged-in dashboard journeys.
 

@@ -22,10 +22,10 @@ services:
       # Free services have no persistent disk: the demo database is re-seeded on every restart.
       - key: DATABASE_PATH
         value: ./data/campusmate.db
-      # Render's network adds entries to X-Forwarded-For. 1 counts the entry nearest the app (not
-      # spoofable); the per-visitor position is not yet confirmed (docs/deployment.md).
+      # Render's network adds 3 entries to X-Forwarded-For; the visitor's own address is the 3rd
+      # from the right (confirmed with the privacy-safe login log, docs/deployment.md).
       - key: TRUST_PROXY_HOPS
-        value: '1'
+        value: '3'
       # PUBLIC_URL is left out on purpose: the server uses Render's RENDER_EXTERNAL_URL.
       # Optional Google Calendar (docs/integrations.md): set both in the dashboard, or neither.
       - key: GOOGLE_CLIENT_ID

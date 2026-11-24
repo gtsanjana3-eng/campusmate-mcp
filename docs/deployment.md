@@ -54,7 +54,7 @@ only accepts requests whose Host matches it.
 | `PUBLIC_URL`                              | no (Render) | Render's `RENDER_EXTERNAL_URL` | Set it only for a custom domain                                    |
 | `PORT`                                    | no          | Render (10000)                 | The server listens on `0.0.0.0:$PORT`                              |
 | `GOOGLE_CLIENT_ID` `GOOGLE_CLIENT_SECRET` | no          | You                            | Both or neither; callback `<url>/api/integrations/google/callback` |
-| `TRUST_PROXY_HOPS`                        | no          | `render.yaml` (1)              | Proxies that append to X-Forwarded-For; 0 when reached directly    |
+| `TRUST_PROXY_HOPS`                        | no          | `render.yaml` (3)              | Proxies that append to X-Forwarded-For; 0 when reached directly    |
 
 The server refuses to start if a secret is missing, short, repetitive or still a placeholder, and
 the error names the variable without printing its value. No secret is stored in the repository.
@@ -83,12 +83,13 @@ referrer policy), login cookie `HttpOnly; Secure; SameSite=Strict`, MCP `tools/l
   balancer, so the connection address alone would make five wrong passcodes from anyone lock
   **everyone** out. `TRUST_PROXY_HOPS=N` makes the limiter count the N-th `X-Forwarded-For` entry
   from the right; entries a visitor adds themselves sit further left and are ignored.
-  **Live result (Phase 21):** one wrong passcode sent with 1 forwarded entry was logged as
-  `socketIsPrivate: true, forwardedEntries: 4`, so Render's network adds **three** entries. With
-  the current value `1` the limiter counts the entry nearest the app, which is most likely a shared
-  internal proxy: no worse than before and not spoofable, but probably still shared by all
-  visitors. The visitor's own address is likely 3 from the right, but that is not yet confirmed
-  (the log records no addresses), so the value stays `1` until it is.
+  **Live result (Phase 22):** one wrong passcode sent with 1 forwarded entry was logged as
+  `forwardedEntries: 4`, `forwardedKinds: [public, public, public, private]`, with
+  `cf-connecting-ip` and `true-client-ip` (the visitor's address as Cloudflare saw it) at
+  `positionFromRight: 3`. Render's network therefore adds three entries and the visitor is the
+  third from the right, so `render.yaml` sets `TRUST_PROXY_HOPS=3`. To re-check after any hosting
+  change, send one wrong passcode and confirm the `auth.login_failed` line shows
+  `usedByLimiter: true`. The log never records an address.
 - **Live test inside Claude** and **real Google Calendar** still need the deployed URL; follow
   `docs/ai-workflows.md` and `docs/integrations.md`.
 
