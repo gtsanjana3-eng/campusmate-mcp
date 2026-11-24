@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { routes } from '@/router';
+import { APPROVALS_CHANGED } from '@/services/approvalService';
 import * as fixtures from '@/test/fixtures';
 import { mockApi, unauthorizedResponse } from '@/test/mockApi';
 
@@ -85,6 +86,31 @@ describe('Approvals page', () => {
     expect(
       await within(nav).findByRole('link', { name: 'Approvals, 1 waiting' }),
     ).toBeInTheDocument();
+  });
+
+  it('announces approvals that arrive in the background, but not the ones already there', async () => {
+    let actions = [fixtures.emailAction()];
+    pendingApi({ 'GET /api/approvals': () => Response.json({ actions }) });
+    renderAt('/');
+    const nav = await screen.findByRole('navigation', { name: 'Primary' });
+    await within(nav).findByRole('link', { name: 'Approvals, 1 waiting' });
+    const live = screen.getAllByRole('status').find((el) => el.closest('header'));
+    expect(live).toHaveTextContent('');
+
+    actions = [fixtures.emailAction(), fixtures.emailAction({ id: 'act-2' })];
+    window.dispatchEvent(new Event(APPROVALS_CHANGED));
+    await waitFor(() =>
+      expect(live).toHaveTextContent('1 new approval waiting for you, 2 in total.'),
+    );
+  });
+
+  it('moves focus to the new page heading after navigating', async () => {
+    pendingApi();
+    renderAt('/');
+    const nav = await screen.findByRole('navigation', { name: 'Primary' });
+    await userEvent.click(within(nav).getByRole('link', { name: /^Activity/ }));
+    const heading = await screen.findByRole('heading', { level: 1, name: 'Activity' });
+    await waitFor(() => expect(heading).toHaveFocus());
   });
 
   it('asks for confirmation; Cancel sends nothing', async () => {

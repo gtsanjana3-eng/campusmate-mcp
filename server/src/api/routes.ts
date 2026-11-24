@@ -1,3 +1,4 @@
+import { setTimeout as delay } from 'node:timers/promises';
 import { getConnInfo } from '@hono/node-server/conninfo';
 import { Hono, type Context } from 'hono';
 import * as z from 'zod';
@@ -50,6 +51,8 @@ const DecisionBody = z.object({}).strict();
 const STATUSES = ['pending', 'approved', 'done', 'rejected', 'failed', 'expired'] as const;
 
 const SESSIONS_VALID_FROM = 'sessions_valid_from';
+/** How long an approval waits for Google Calendar before answering (covers the normal retries). */
+const CALENDAR_WAIT_MS = 2_000;
 
 export const TEST_PROMPT = 'What do I have today, and is my attendance safe in every subject?';
 
@@ -190,8 +193,15 @@ export function createApiRoutes(
       status: action.status,
     });
     // A saved reminder is also offered to Google Calendar; the result is recorded as a note.
+    // A slow Google must not hold the student's approval: wait briefly, then let it finish in the background.
     if (action.status === 'done' && action.preview.tool === 'create_reminder') {
-      await calendar.syncApprovedReminder(id, action.preview.reminder);
+      const sync = calendar
+        .syncApprovedReminder(id, action.preview.reminder)
+        .catch((error: unknown) => log.error('calendar.sync_failed', error));
+      const wait = new AbortController();
+      const timer = delay(CALENDAR_WAIT_MS, undefined, { signal: wait.signal }).catch(() => {});
+      await Promise.race([sync, timer]);
+      wait.abort();
       action = getAction(store, id);
     }
     return c.json<ActionResponse>({ action });

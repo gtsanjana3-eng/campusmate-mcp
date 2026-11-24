@@ -55,7 +55,7 @@ function requireFuture(iso: string, what: string, now: Date) {
 }
 
 /** Records the proposal and builds the reply; shared by all four act tools. */
-function proposal(deps: ToolDeps, preview: ActionPreview, why: string) {
+function proposal<P extends ActionPreview>(deps: ToolDeps, preview: P, why: string) {
   const action = propose(deps.store, { preview, reason: why }, deps.now());
   const what = describe(preview);
   return {
@@ -107,7 +107,7 @@ export function registerActTools(server: McpServer, deps: ToolDeps): void {
           .describe("Full email body, signed with the student's name."),
         reason,
       }),
-      outputSchema: ProposalOutput,
+      outputSchema: ProposalOutput.draft_faculty_email,
     },
     (input) => {
       const faculty = resolveFaculty(deps.store, input);
@@ -147,7 +147,7 @@ export function registerActTools(server: McpServer, deps: ToolDeps): void {
         sourceNoticeId: z.string().trim().max(60).optional(),
         reason,
       }),
-      outputSchema: ProposalOutput,
+      outputSchema: ProposalOutput.add_deadline,
     },
     (input) => {
       const now = deps.now();
@@ -188,7 +188,7 @@ export function registerActTools(server: McpServer, deps: ToolDeps): void {
         deadlineId: z.string().trim().max(60).optional(),
         reason,
       }),
-      outputSchema: ProposalOutput,
+      outputSchema: ProposalOutput.create_reminder,
     },
     (input) => {
       requireFuture(input.remindAt, 'remindAt', deps.now());
@@ -219,7 +219,7 @@ export function registerActTools(server: McpServer, deps: ToolDeps): void {
         'Proposes marking a deadline as submitted or finished, after the student says they did it. Use the id from ' +
         `list_deadlines. ${ASK_FIRST} ${APPROVAL_NOTE}`,
       inputSchema: z.object({ deadlineId: z.string().trim().min(1).max(60), reason }),
-      outputSchema: ProposalOutput,
+      outputSchema: ProposalOutput.mark_deadline_done,
     },
     (input) => {
       const deadline = deps.store.getDeadline(input.deadlineId);

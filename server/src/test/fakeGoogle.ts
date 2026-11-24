@@ -21,6 +21,8 @@ export function fakeGoogle() {
     outages: 0,
     /** Calendar calls answer 403 (access removed in Google settings). */
     calendarRevoked: false,
+    /** Calendar calls never answer; they end only when the caller's timeout aborts them. */
+    hang: false,
   };
 
   const issue = () => {
@@ -58,6 +60,11 @@ export function fakeGoogle() {
     if (url === 'https://oauth2.googleapis.com/revoke') return new Response(null, { status: 200 });
 
     if (url.startsWith('https://www.googleapis.com/calendar/v3/')) {
+      if (state.hang) {
+        return new Promise<Response>((_, reject) =>
+          init?.signal?.addEventListener('abort', () => reject(new Error('aborted'))),
+        );
+      }
       if (state.outages > 0) {
         state.outages--;
         return json({ error: { code: 503 } }, 503);

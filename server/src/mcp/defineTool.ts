@@ -70,6 +70,14 @@ export function defineTool<
 ): void {
   const record = (kind: ActivityKind, summary: string, actionId?: string) =>
     logActivity(deps.store, { kind, tool: spec.name, summary, ...(actionId ? { actionId } : {}) });
+  // Used while handling an error: if the log itself fails (database down), its message must not reach the AI.
+  const recordFailure = (kind: ActivityKind, summary: string) => {
+    try {
+      record(kind, summary);
+    } catch (error) {
+      log.error('mcp.activity_log_failed', error, { tool: spec.name });
+    }
+  };
 
   const callback = async (input: z.infer<In>): Promise<CallToolResult> => {
     try {
@@ -87,12 +95,12 @@ export function defineTool<
     } catch (error) {
       if (error instanceof AppError) {
         const kind = error.code === 'ability_disabled' ? 'blocked' : 'failed';
-        record(kind, `${spec.title}: ${error.message}`);
+        recordFailure(kind, `${spec.title}: ${error.message}`);
         log.info('mcp.tool', { tool: spec.name, outcome: kind, code: error.code });
         return textResult(error.message, true);
       }
       log.error('mcp.tool_failed', error, { tool: spec.name });
-      record('failed', `${spec.title} failed unexpectedly.`);
+      recordFailure('failed', `${spec.title} failed unexpectedly.`);
       return textResult('Something went wrong in CampusMate. Please try again.', true);
     }
   };

@@ -13,7 +13,7 @@ export function Header() {
   const [openOnPath, setOpenOnPath] = useState<string | null>(null);
   const isMenuOpen = openOnPath === pathname;
   const isLoginPage = pathname === ROUTES.login;
-  const pendingCount = usePendingCount(!isLoginPage);
+  const { count: pendingCount, announcement } = usePendingCount(!isLoginPage);
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -82,6 +82,8 @@ export function Header() {
           </>
         )}
       </div>
+      {/* Always mounted, so screen readers hear new approvals the AI proposes in the background. */}
+      <output className="visually-hidden">{announcement}</output>
     </header>
   );
 }

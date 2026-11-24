@@ -284,6 +284,17 @@ describe('approved reminders', () => {
     expect(long.store.count('reminders')).toBe(1);
     expect(await long.status()).toBe('connected');
   });
+
+  it('do not keep the student waiting when Google never answers', async () => {
+    const { connect, google, reminder, approve, store } = await setup();
+    await connect();
+    google.state.hang = true;
+    const started = performance.now();
+    const action = await approve(reminder());
+    expect(performance.now() - started).toBeLessThan(3_000);
+    expect(action.status).toBe('done');
+    expect(store.count('reminders')).toBe(1);
+  });
 });
 
 describe('disconnecting', () => {

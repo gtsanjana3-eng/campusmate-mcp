@@ -79,38 +79,55 @@ export const PendingSummarySchema = z.object({
   summary: z.string(),
 }) satisfies z.ZodType<PendingSummary>;
 
-export const ActionPreviewSchema = z.discriminatedUnion('tool', [
-  z.object({
-    tool: z.literal('draft_faculty_email'),
-    email: z.object({
-      toName: z.string(),
-      toEmail: z.string(),
-      subject: z.string(),
-      body: z.string(),
-    }),
+const EmailPreview = z.object({
+  tool: z.literal('draft_faculty_email'),
+  email: z.object({
+    toName: z.string(),
+    toEmail: z.string(),
+    subject: z.string(),
+    body: z.string(),
   }),
-  z.object({
-    tool: z.literal('add_deadline'),
-    deadline: DeadlineSchema.omit({ id: true, status: true }),
+});
+const AddDeadlinePreview = z.object({
+  tool: z.literal('add_deadline'),
+  deadline: DeadlineSchema.omit({ id: true, status: true }),
+});
+const ReminderPreview = z.object({
+  tool: z.literal('create_reminder'),
+  reminder: z.object({
+    text: z.string(),
+    remindAt: z.string(),
+    deadlineId: z.string().optional(),
   }),
-  z.object({
-    tool: z.literal('create_reminder'),
-    reminder: z.object({
-      text: z.string(),
-      remindAt: z.string(),
-      deadlineId: z.string().optional(),
-    }),
-  }),
-  z.object({ tool: z.literal('mark_deadline_done'), deadline: DeadlineSchema }),
+});
+const MarkDonePreview = z.object({
+  tool: z.literal('mark_deadline_done'),
+  deadline: DeadlineSchema,
+});
+
+// Keeps the four variants in step with the shared ActionPreview type.
+z.discriminatedUnion('tool', [
+  EmailPreview,
+  AddDeadlinePreview,
+  ReminderPreview,
+  MarkDonePreview,
 ]) satisfies z.ZodType<ActionPreview>;
 
-/** What every act tool returns: a proposal, never a completed action. */
-export const ProposalOutput = z.object({
-  actionId: z.string(),
-  status: z.literal('pending'),
-  preview: ActionPreviewSchema,
-  message: z.string(),
-});
+/** What an act tool returns: a proposal, never a completed action. Each tool lists only its own preview, to keep the AI's context small. */
+const proposalOutput = <P extends z.ZodObject>(preview: P) =>
+  z.object({
+    actionId: z.string(),
+    status: z.literal('pending'),
+    preview,
+    message: z.string(),
+  });
+
+export const ProposalOutput = {
+  draft_faculty_email: proposalOutput(EmailPreview),
+  add_deadline: proposalOutput(AddDeadlinePreview),
+  create_reminder: proposalOutput(ReminderPreview),
+  mark_deadline_done: proposalOutput(MarkDonePreview),
+};
 
 // ---------- Shared input fields ----------
 

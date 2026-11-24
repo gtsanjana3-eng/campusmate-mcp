@@ -85,6 +85,15 @@ describe('defineTool', () => {
     expect(JSON.stringify(result.content)).not.toContain('secret internal detail');
   });
 
+  it('still hides the details when the database is down and the activity log cannot be written', async () => {
+    const { client, store } = await connectWith('ok');
+    store.close();
+    const result = await call(client);
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.content)).toContain('Something went wrong in CampusMate');
+    expect(JSON.stringify(result.content)).not.toContain('database');
+  });
+
   it('rejects input that does not match the schema', async () => {
     const { client } = await connectWith('ok');
     const result = await call(client, { subjectCode: 42 });
