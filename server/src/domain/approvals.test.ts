@@ -7,6 +7,7 @@ import { listActivity } from './activity.ts';
 import {
   approveAction,
   EXPIRY_MS,
+  MAX_PENDING,
   editEmailDraft,
   listActions,
   pendingSummary,
@@ -159,5 +160,79 @@ describe('approval state machine', () => {
         summary: 'Email to Prof. K. Rao: “Extension request”',
       },
     ]);
+  });
+});
+
+describe('pending cap (audit M4)', () => {
+  it('refuses new proposals once MAX_PENDING are waiting, and accepts again after a decision', () => {
+    const { store } = setup();
+    const ids = Array.from(
+      { length: MAX_PENDING },
+      () => propose(store, { preview: email, reason: 'Flood' }, TEST_NOW).id,
+    );
+    expect(() => propose(store, { preview: email, reason: 'One too many' }, TEST_NOW)).toThrow(
+      /already waiting for the student/,
+    );
+    rejectAction(store, ids[0] as string, TEST_NOW);
+    expect(propose(store, { preview: email, reason: 'Room again' }, TEST_NOW).status).toBe(
+      'pending',
+    );
+  });
+});
+
+/** Makes a decided action and its sent email look as if they happened at `when`. */
+function backdate(store: ReturnType<typeof setup>['store'], id: string, when: Date) {
+  const iso = when.toISOString();
+  store.db
+    .prepare('UPDATE pending_actions SET created_at = ?, decided_at = ? WHERE id = ?')
+    .run(iso, iso, id);
+  store.db.prepare('UPDATE outbox SET sent_at = ? WHERE action_id = ?').run(iso, id);
+}
+
+describe('30-day retention (audit M5)', () => {
+  it('deletes old sent emails, past reminders and decided actions, but keeps pending ones', () => {
+    const { store, deps } = setup();
+    const old = new Date(TEST_NOW.getTime() - 40 * 24 * 3_600_000);
+
+    const sent = propose(store, { preview: email, reason: 'Old email' }, TEST_NOW);
+    approveAction(store, sent.id, deps);
+    backdate(store, sent.id, old);
+    const waiting = propose(store, { preview: email, reason: 'Still waiting' }, TEST_NOW);
+    store.insertReminder({ id: 'r-old', text: 'Long gone', remindAt: old.toISOString() });
+    store.insertReminder({ id: 'r-new', text: 'Upcoming', remindAt: '2026-11-30T18:00:00+05:30' });
+
+    store.purgeOlderThan(new Date(TEST_NOW.getTime() - 30 * 24 * 3_600_000).toISOString());
+
+    expect(store.count('outbox')).toBe(0);
+    expect(store.getPendingAction(sent.id)).toBeUndefined();
+    expect(store.getPendingAction(waiting.id)?.status).toBe('pending');
+    const reminders = store.db.prepare('SELECT id FROM reminders').all();
+    expect(reminders).toEqual([{ id: 'r-new' }]);
+  });
+
+  it('keeps deadlines created by an old action, just unlinks them', () => {
+    const { store, deps } = setup();
+    const old = new Date(TEST_NOW.getTime() - 40 * 24 * 3_600_000);
+    const added = propose(
+      store,
+      {
+        preview: {
+          tool: 'add_deadline',
+          deadline: {
+            subjectCode: 'OS',
+            title: 'Old viva',
+            dueAt: '2026-12-30T10:00:00+05:30',
+            kind: 'exam',
+            source: 'student',
+          },
+        },
+        reason: 'Old',
+      },
+      TEST_NOW,
+    );
+    approveAction(store, added.id, deps);
+    backdate(store, added.id, old);
+    store.purgeOlderThan(new Date(TEST_NOW.getTime() - 30 * 24 * 3_600_000).toISOString());
+    expect(store.listDeadlines().some((d) => d.title === 'Old viva')).toBe(true);
   });
 });

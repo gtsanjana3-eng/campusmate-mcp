@@ -3,16 +3,19 @@ import type { Store } from '../data/store.ts';
 
 export const MAX_ACTIVITY = 100;
 
-/** Privacy: the log is for recent oversight, not a permanent record of what the student asked. */
+/**
+ * Privacy: CampusMate keeps 30 days of history (activity, sent demo emails, past reminders and
+ * decided actions), not a permanent record of what the student asked.
+ */
 export const ACTIVITY_RETENTION_MS = 30 * 24 * 3_600_000;
 
 /**
  * Records something CampusMate did or refused, in a sentence the student can read, and drops
- * entries older than the retention period.
+ * everything older than the retention period.
  */
 export function logActivity(store: Store, entry: Omit<ActivityEntry, 'id' | 'at'>): ActivityEntry {
   const now = Date.now();
-  store.pruneActivityBefore(new Date(now - ACTIVITY_RETENTION_MS).toISOString());
+  store.purgeOlderThan(new Date(now - ACTIVITY_RETENTION_MS).toISOString());
   return store.addActivity({ ...entry, at: new Date(now).toISOString() });
 }
 

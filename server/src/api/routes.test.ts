@@ -5,7 +5,7 @@ import type {
   AttendanceResponse,
   TodayResponse,
 } from '../../../shared/types/index.ts';
-import { login, TEST_HOST, TEST_TOKEN, testApp } from '../test/helpers.ts';
+import { login, TEST_HOST, TEST_PASSCODE, TEST_TOKEN, testApp } from '../test/helpers.ts';
 
 const json = (body: unknown) => ({
   headers: { 'Content-Type': 'application/json' },
@@ -27,7 +27,7 @@ describe('session API', () => {
     const { app } = testApp();
     const response = await app.request('/api/session', {
       method: 'POST',
-      ...json({ passcode: 'letmein' }),
+      ...json({ passcode: TEST_PASSCODE }),
     });
     expect(response.status).toBe(204);
     const cookie = response.headers.get('set-cookie') ?? '';
@@ -42,7 +42,7 @@ describe('session API', () => {
     const response = await app.request('/api/session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'passcode=letmein',
+      body: `passcode=${TEST_PASSCODE}`,
     });
     expect(response.status).toBe(415);
   });
@@ -166,5 +166,22 @@ describe('today and attendance API', () => {
     expect(body.minimumPercent).toBe(75);
     expect(body.subjects.find((s) => s.subjectCode === 'OS')).toMatchObject({ canMiss: 1 });
     expect(body.subjects.find((s) => s.subjectCode === 'CN')).toMatchObject({ mustAttend: 6 });
+  });
+});
+
+describe('logout (audit M3)', () => {
+  it('stops a copied cookie from working', async () => {
+    const { app } = testApp();
+    const stolen = await login(app);
+    await app.request('/api/session', { method: 'DELETE', headers: { Cookie: stolen } });
+    expect((await app.request('/api/abilities', { headers: { Cookie: stolen } })).status).toBe(401);
+  });
+
+  it('lets the student log in again afterwards', async () => {
+    const { app } = testApp();
+    const first = await login(app);
+    await app.request('/api/session', { method: 'DELETE', headers: { Cookie: first } });
+    const second = await login(app);
+    expect((await app.request('/api/abilities', { headers: { Cookie: second } })).status).toBe(200);
   });
 });

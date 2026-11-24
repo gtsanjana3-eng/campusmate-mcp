@@ -101,7 +101,13 @@ Attendance maths, with `a` attended out of `h` held and minimum `m` (0.75):
 
 - Bearer token compared in constant time; DNS-rebinding protection from the SDK's Hono app, with
   allowed hosts set from `PUBLIC_URL`.
-- Session cookie: signed, httpOnly, Secure, SameSite=Strict; state-changing routes require JSON.
+- Session cookie: signed, httpOnly, Secure, SameSite=Strict, 12-hour lifetime; logging out revokes
+  every earlier session on the server. State-changing routes require JSON.
+- Login: 5 wrong passcodes lock that client out for 15 minutes; 30 failures from anyone pause all
+  logins. The server refuses to start with placeholder, short or repetitive secrets.
+- API responses are `Cache-Control: no-store`; request bodies over 16 KB are refused.
+- At most 20 proposals can wait at once; history (activity, sent demo emails, past reminders,
+  decided actions) is deleted after 30 days.
 - zod validation and length limits on every input. React escapes all text; no raw HTML.
 - Prompt injection (for example in a notice) can at most produce a pending card the student rejects.
 - **Residual risk:** the guarantee is that the _MCP channel_ cannot approve. A browser-automation

@@ -152,3 +152,25 @@ describe('logged in', () => {
     expect(menuButton).toHaveAttribute('aria-expanded', 'false');
   });
 });
+
+describe('login lockout', () => {
+  it('shows how long to wait after too many wrong passcodes', async () => {
+    mockApi({
+      'GET /api/session': unauthorizedResponse,
+      'POST /api/session': () =>
+        Response.json(
+          {
+            error: {
+              code: 'too_many_attempts',
+              message: 'Too many wrong passcodes. Try again in 15 minutes.',
+            },
+          },
+          { status: 429, headers: { 'Retry-After': '900' } },
+        ),
+    });
+    renderAt('/login');
+    await userEvent.type(await screen.findByLabelText('Passcode'), 'another-guess');
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Try again in 15 minutes');
+  });
+});

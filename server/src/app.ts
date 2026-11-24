@@ -2,6 +2,7 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { createMcpHonoApp } from '@modelcontextprotocol/hono';
 import { createMcpHandler } from '@modelcontextprotocol/server';
 import { Hono, type Context } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
 import type { ApiErrorBody } from '../../shared/types/index.ts';
 import { createApiRoutes } from './api/routes.ts';
@@ -27,6 +28,9 @@ type AppOptions = {
   /** Folder with the built dashboard, relative to the process working directory. Omit in tests. */
   webDist?: string;
 };
+
+/** Largest dashboard request: an edited email (2,000 characters) fits many times over. */
+export const API_BODY_LIMIT_BYTES = 16 * 1024;
 
 const apiError = (code: string, message: string): ApiErrorBody => ({ error: { code, message } });
 
@@ -78,6 +82,19 @@ export function createApp(env: Env, options: AppOptions) {
   app.route('/mcp', mcp);
 
   // --- REST API: only the dashboard talks to this, with the session cookie ---
+  // Responses carry student data and the MCP token: never cache them (audit M1).
+  app.use('/api/*', async (c, next) => {
+    await next();
+    c.header('Cache-Control', 'no-store');
+  });
+  // Dashboard requests are small; refuse large bodies before reading them (audit M2).
+  app.use(
+    '/api/*',
+    bodyLimit({
+      maxSize: API_BODY_LIMIT_BYTES,
+      onError: (c) => c.json(apiError('payload_too_large', 'That request is too large.'), 413),
+    }),
+  );
   app.route('/api', createApiRoutes(env, { store, mailer, calendar, now }));
   app.all('/api/*', (c) => c.json(apiError('not_found', 'No such API route.'), 404));
 

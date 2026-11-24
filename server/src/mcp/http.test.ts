@@ -4,7 +4,13 @@ import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/cli
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../app.ts';
 import { parseEnv } from '../config/env.ts';
-import { seededStore, TEST_NOW, TEST_TOKEN } from '../test/helpers.ts';
+import {
+  seededStore,
+  TEST_NOW,
+  TEST_PASSCODE,
+  TEST_SESSION_SECRET,
+  TEST_TOKEN,
+} from '../test/helpers.ts';
 
 /**
  * End to end over real HTTP: a real server on a local port and the official MCP client,
@@ -18,8 +24,8 @@ beforeAll(async () => {
   // PUBLIC_URL is only used for the host allow-list here; the client connects to 127.0.0.1.
   const env = parseEnv({
     MCP_TOKEN: TEST_TOKEN,
-    DASHBOARD_PASSCODE: 'letmein',
-    SESSION_SECRET: 's'.repeat(40),
+    DASHBOARD_PASSCODE: TEST_PASSCODE,
+    SESSION_SECRET: TEST_SESSION_SECRET,
     PUBLIC_URL: 'http://localhost:8787',
   });
   const app = createApp(env, { store, now: () => TEST_NOW });

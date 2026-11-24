@@ -17,6 +17,9 @@ import { AppError, conflict, notFound, validationError } from './errors.ts';
 /** Proposals the student hasn't decided on within a day expire and can no longer run. */
 export const EXPIRY_MS = 24 * 3_600_000;
 
+/** Most proposals that may wait for the student at once. */
+export const MAX_PENDING = 20;
+
 /** One plain sentence describing a proposed action, used in the log and in summaries. */
 export function describe(preview: ActionPreview): string {
   switch (preview.tool) {
@@ -60,6 +63,15 @@ export function propose(
   input: { preview: ActionPreview; reason: string },
   now: Date,
 ): PendingAction {
+  expireStale(store, now);
+  // A runaway assistant (or a stolen MCP token) must not bury real requests (audit M4).
+  if (store.listPendingActions({ status: 'pending' }).length >= MAX_PENDING) {
+    throw new AppError(
+      'too_many_pending',
+      429,
+      `${MAX_PENDING} actions are already waiting for the student. Ask them to review those in CampusMate before proposing more.`,
+    );
+  }
   const id = randomUUID();
   store.insertPendingAction({
     id,

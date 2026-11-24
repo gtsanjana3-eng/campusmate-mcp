@@ -3,14 +3,16 @@ import { parseEnv } from '../config/env.ts';
 import { seedStore } from '../data/seed.ts';
 import { createStore } from '../data/store.ts';
 
-export const TEST_TOKEN = 't'.repeat(40);
-export const TEST_PASSCODE = 'letmein';
+// Test-only values: long and varied enough to pass the start-up checks, never used anywhere real.
+export const TEST_TOKEN = 'mcp-test-token-9f3a1c7e5b2d4f6a8c0e1b3d5f7a9c2e';
+export const TEST_PASSCODE = 'student-pass-4821';
+export const TEST_SESSION_SECRET = 'session-test-key-7b1d9e3f5a2c4e6b8d0f2a4c6e8b';
 export const TEST_HOST = 'campusmate.example.com';
 
 export const testEnv = parseEnv({
   MCP_TOKEN: TEST_TOKEN,
   DASHBOARD_PASSCODE: TEST_PASSCODE,
-  SESSION_SECRET: 's'.repeat(40),
+  SESSION_SECRET: TEST_SESSION_SECRET,
   PUBLIC_URL: `https://${TEST_HOST}`,
 });
 

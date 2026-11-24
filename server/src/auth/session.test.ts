@@ -42,3 +42,19 @@ describe('passcode', () => {
     expect(passcodeMatches('', 'letmein')).toBe(false);
   });
 });
+
+describe('server-side revocation (audit M3)', () => {
+  it('lasts 12 hours', () => {
+    expect(SESSION_TTL_SECONDS).toBe(12 * 60 * 60);
+  });
+
+  it('rejects sessions issued before the revocation point, accepts newer ones', () => {
+    const value = createSessionValue(SECRET, NOW);
+    expect(isValidSession(value, SECRET, NOW + 1000, NOW + 1)).toBe(false);
+    expect(isValidSession(value, SECRET, NOW + 1000, NOW)).toBe(true);
+  });
+
+  it('rejects a session claiming to be issued in the future', () => {
+    expect(isValidSession(createSessionValue(SECRET, NOW + 60_000), SECRET, NOW)).toBe(false);
+  });
+});

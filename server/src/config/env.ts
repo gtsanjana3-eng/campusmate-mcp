@@ -6,11 +6,32 @@ const optionalText = z.preprocess(
   z.string().min(1).optional(),
 );
 
+/** Words that mark a value copied from .env.example or a tutorial rather than generated. */
+const PLACEHOLDER = /replace|change-?me|example|placeholder|your[-_ ]|secret-here|password/i;
+
+/**
+ * A secret must be long, must not be a published placeholder, and must not be trivially
+ * repetitive (e.g. "aaaa…"). Generate one with:
+ * node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+ */
+const secret = (name: string, minLength: number) =>
+  z
+    .string()
+    .min(minLength, `${name} must be at least ${minLength} characters`)
+    .refine(
+      (value) => !PLACEHOLDER.test(value),
+      `${name} still looks like a placeholder; generate a real value`,
+    )
+    .refine(
+      (value) => new Set(value).size >= 8,
+      `${name} is too repetitive; generate a random value`,
+    );
+
 const EnvSchema = z
   .object({
-    MCP_TOKEN: z.string().min(32, 'MCP_TOKEN must be at least 32 characters'),
-    DASHBOARD_PASSCODE: z.string().min(6, 'DASHBOARD_PASSCODE must be at least 6 characters'),
-    SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters'),
+    MCP_TOKEN: secret('MCP_TOKEN', 32),
+    DASHBOARD_PASSCODE: secret('DASHBOARD_PASSCODE', 12),
+    SESSION_SECRET: secret('SESSION_SECRET', 32),
     DATABASE_PATH: z.string().min(1).default('./data/campusmate.db'),
     PUBLIC_URL: z.url().default('http://localhost:8787'),
     PORT: z.coerce.number().int().min(1).max(65535).default(8787),

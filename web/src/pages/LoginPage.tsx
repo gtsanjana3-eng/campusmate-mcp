@@ -31,11 +31,14 @@ export default function LoginPage() {
       await login(passcode);
       await navigate(returnTo, { replace: true });
     } catch (caught) {
-      setError(
-        caught instanceof ApiError && caught.status === 401
-          ? 'That passcode is not right. Try again.'
-          : 'CampusMate could not be reached. Check your connection and try again.',
-      );
+      if (caught instanceof ApiError && caught.status === 401) {
+        setError('That passcode is not right. Try again.');
+      } else if (caught instanceof ApiError && caught.status === 429) {
+        // The server's message says how long to wait.
+        setError(caught.message);
+      } else {
+        setError('CampusMate could not be reached. Check your connection and try again.');
+      }
       setIsSubmitting(false);
     }
   };

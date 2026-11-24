@@ -136,6 +136,12 @@ export function createStore(path: string) {
       return (db.prepare('SELECT 1 AS ok').get() as { ok: number }).ok === 1;
     },
 
+    setSetting(key: string, value: string): void {
+      db.prepare(
+        'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+      ).run(key, value);
+    },
+
     getSetting(key: string): string | undefined {
       const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as
         { value: string } | undefined;
@@ -172,8 +178,24 @@ export function createStore(path: string) {
       return { ...entry, id: String(result.lastInsertRowid) };
     },
 
-    pruneActivityBefore(cutoff: string): number {
-      return Number(db.prepare('DELETE FROM activity WHERE at < ?').run(cutoff).changes);
+    /**
+     * Deletes records older than  (audit M5): activity, sent demo emails, past reminders and
+     * decided actions. Still-pending actions and open deadlines are kept.
+     */
+    purgeOlderThan(cutoff: string): void {
+      this.transaction(() => {
+        db.prepare('DELETE FROM activity WHERE at < ?').run(cutoff);
+        db.prepare('DELETE FROM outbox WHERE sent_at < ?').run(cutoff);
+        db.prepare('DELETE FROM reminders WHERE remind_at < ?').run(cutoff);
+        const old =
+          "SELECT id FROM pending_actions WHERE status NOT IN ('pending', 'approved') AND COALESCE(decided_at, created_at) < ?";
+        db.prepare(`DELETE FROM outbox WHERE action_id IN (${old})`).run(cutoff);
+        db.prepare(
+          `UPDATE deadlines SET created_by_action = NULL WHERE created_by_action IN (${old})`,
+        ).run(cutoff);
+        db.prepare(`UPDATE activity SET action_id = NULL WHERE action_id IN (${old})`).run(cutoff);
+        db.prepare(`DELETE FROM pending_actions WHERE id IN (${old})`).run(cutoff);
+      });
     },
 
     // ---------- External integrations ----------

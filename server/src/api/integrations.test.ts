@@ -77,9 +77,9 @@ async function setup(options: { configured?: boolean } = {}) {
 describe('configuration', () => {
   it('treats empty values as not set, and needs both or neither', () => {
     const base = {
-      MCP_TOKEN: 't'.repeat(40),
-      DASHBOARD_PASSCODE: 'letmein',
-      SESSION_SECRET: 's'.repeat(40),
+      MCP_TOKEN: testEnv.MCP_TOKEN,
+      DASHBOARD_PASSCODE: testEnv.DASHBOARD_PASSCODE,
+      SESSION_SECRET: testEnv.SESSION_SECRET,
     };
     expect(
       parseEnv({ ...base, GOOGLE_CLIENT_ID: '', GOOGLE_CLIENT_SECRET: '' }).GOOGLE_CLIENT_ID,

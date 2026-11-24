@@ -1,4 +1,6 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { API_BODY_LIMIT_BYTES } from './app.ts';
 import { parseEnv } from './config/env.ts';
 import { TEST_TOKEN as TOKEN, testApp, testEnv as env } from './test/helpers.ts';
 
@@ -56,6 +58,33 @@ describe('parseEnv', () => {
     expect(parseInvalidEnv).toThrow(/DASHBOARD_PASSCODE/);
     expect(parseInvalidEnv).not.toThrow(/short-secret-value/);
   });
+
+  it('refuses to start with the published .env.example placeholders (audit H1)', () => {
+    const example = Object.fromEntries(
+      readFileSync(new URL('../../.env.example', import.meta.url), 'utf8')
+        .split('\n')
+        .filter((line) => /^[A-Z_]+=/.test(line))
+        .map((line) => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)]),
+    );
+    const attempt = () => parseEnv(example);
+    expect(attempt).toThrow(/MCP_TOKEN still looks like a placeholder/);
+    expect(attempt).toThrow(/SESSION_SECRET still looks like a placeholder/);
+    expect(attempt).toThrow(/DASHBOARD_PASSCODE/);
+  });
+
+  it('refuses short, placeholder-like or repetitive secrets', () => {
+    const valid = {
+      MCP_TOKEN: env.MCP_TOKEN,
+      DASHBOARD_PASSCODE: env.DASHBOARD_PASSCODE,
+      SESSION_SECRET: env.SESSION_SECRET,
+    };
+    expect(() => parseEnv({ ...valid, DASHBOARD_PASSCODE: 'letmein1' })).toThrow(/at least 12/);
+    expect(() => parseEnv({ ...valid, DASHBOARD_PASSCODE: 'my-password-123' })).toThrow(
+      /placeholder/,
+    );
+    expect(() => parseEnv({ ...valid, MCP_TOKEN: 'a'.repeat(40) })).toThrow(/too repetitive/);
+    expect(parseEnv(valid).MCP_TOKEN).toBe(env.MCP_TOKEN);
+  });
 });
 
 describe('REST boundary', () => {
@@ -96,5 +125,23 @@ describe('MCP boundary', () => {
     const response = await mcpRequest({ Authorization: `Bearer ${TOKEN}` });
     expect(response.status).toBe(200);
     expect((await readMessage(response)).result?.serverInfo?.name).toBe('campusmate');
+  });
+});
+
+describe('API hardening (audit M1, M2)', () => {
+  it('marks every API response as not cacheable', async () => {
+    for (const path of ['/api/health', '/api/connect', '/api/nope']) {
+      expect((await app.request(path)).headers.get('cache-control')).toBe('no-store');
+    }
+  });
+
+  it('refuses request bodies over the limit before reading them', async () => {
+    const response = await app.request('/api/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ passcode: 'x'.repeat(API_BODY_LIMIT_BYTES) }),
+    });
+    expect(response.status).toBe(413);
+    expect(await response.json()).toMatchObject({ error: { code: 'payload_too_large' } });
   });
 });

@@ -1,9 +1,11 @@
-import { Hono } from 'hono';
+import { getConnInfo } from '@hono/node-server/conninfo';
+import { Hono, type Context } from 'hono';
 import * as z from 'zod';
 import type {
   AbilitiesResponse,
   AbilityResponse,
   ActionResponse,
+  ApiErrorBody,
   ActivityResponse,
   ApprovalsResponse,
   AttendanceResponse,
@@ -17,6 +19,7 @@ import {
   requireSession,
   startSession,
 } from '../auth/session.ts';
+import { createLoginLimiter, type LoginLimiter } from '../auth/loginLimiter.ts';
 import type { Env } from '../config/env.ts';
 import type { Store } from '../data/store.ts';
 import { listAbilities, setAbility } from '../domain/abilities.ts';
@@ -46,14 +49,36 @@ const EditEmailBody = z.object({
 const DecisionBody = z.object({}).strict();
 const STATUSES = ['pending', 'approved', 'done', 'rejected', 'failed', 'expired'] as const;
 
+const SESSIONS_VALID_FROM = 'sessions_valid_from';
+
 export const TEST_PROMPT = 'What do I have today, and is my attendance safe in every subject?';
 
-type ApiDeps = { store: Store; mailer: Mailer; calendar: CalendarIntegration; now: () => Date };
+type ApiDeps = {
+  store: Store;
+  mailer: Mailer;
+  calendar: CalendarIntegration;
+  now: () => Date;
+  limiter?: LoginLimiter;
+};
+
+/** The connecting address; tests (no socket) share one key. */
+function clientAddress(c: Context): string {
+  try {
+    return getConnInfo(c).remote.address ?? 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
 
 /** REST API for the dashboard. Mounted at /api. */
-export function createApiRoutes(env: Env, { store, mailer, calendar, now }: ApiDeps) {
+export function createApiRoutes(
+  env: Env,
+  { store, mailer, calendar, now, limiter = createLoginLimiter() }: ApiDeps,
+) {
   const api = new Hono();
-  const session = requireSession(env.SESSION_SECRET);
+  // Sessions issued before the last logout are rejected (audit M3).
+  const sessionsValidFrom = () => Number(store.getSetting(SESSIONS_VALID_FROM) ?? 0);
+  const session = requireSession(env.SESSION_SECRET, sessionsValidFrom);
 
   api.use('*', requireJsonForWrites);
 
@@ -65,18 +90,40 @@ export function createApiRoutes(env: Env, { store, mailer, calendar, now }: ApiD
   );
 
   api.post('/session', async (c) => {
+    const client = clientAddress(c);
+    // Checked before the passcode, so a locked-out client learns nothing, even with the right one.
+    const wait = limiter.retryAfterSeconds(client);
+    if (wait > 0) {
+      log.info('auth.login_locked', { retryAfterSeconds: wait });
+      c.header('Retry-After', String(wait));
+      return c.json<ApiErrorBody>(
+        {
+          error: {
+            code: 'too_many_attempts',
+            message: `Too many wrong passcodes. Try again in ${Math.ceil(wait / 60)} minutes.`,
+          },
+        },
+        429,
+      );
+    }
+
     const { passcode } = await readJson(c, SessionBody);
     if (!passcodeMatches(passcode, env.DASHBOARD_PASSCODE)) {
+      limiter.recordFailure(client);
       log.info('auth.login_failed');
       throw unauthorized();
     }
+    limiter.recordSuccess(client);
     startSession(c, env.SESSION_SECRET);
     log.info('auth.login');
     return c.body(null, 204);
   });
 
+  // Logging out ends every session on the server, so a copied cookie stops working too.
   api.delete('/session', (c) => {
+    store.setSetting(SESSIONS_VALID_FROM, String(Date.now()));
     endSession(c);
+    log.info('auth.logout');
     return c.body(null, 204);
   });
 
