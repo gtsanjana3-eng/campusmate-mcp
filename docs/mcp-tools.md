@@ -20,6 +20,28 @@ Endpoint: `POST <PUBLIC_URL>/mcp` (Streamable HTTP, stateless). Every request ne
 5. **Behaviour hints.** Read tools carry `readOnlyHint: true`; act tools `readOnlyHint: false`,
    `destructiveHint: false`.
 
+## Permission requirements
+
+Every tool has its own switch on the dashboard's **Permissions** page (all on for a new student).
+The AI host needs the bearer token for every call; it can never approve.
+
+| Tool                  | Kind | Needs its switch on | Needs the student's approval to take effect      |
+| --------------------- | ---- | ------------------- | ------------------------------------------------ |
+| `get_today`           | read | yes                 | no (changes nothing)                             |
+| `get_timetable`       | read | yes                 | no                                               |
+| `list_deadlines`      | read | yes                 | no                                               |
+| `get_attendance`      | read | yes                 | no                                               |
+| `list_notices`        | read | yes                 | no                                               |
+| `plan_week`           | read | yes                 | no (suggestion only, saves nothing)              |
+| `draft_faculty_email` | act  | yes                 | yes, and the switch is checked again at approval |
+| `add_deadline`        | act  | yes                 | yes, checked again at approval                   |
+| `create_reminder`     | act  | yes                 | yes, checked again at approval                   |
+| `mark_deadline_done`  | act  | yes                 | yes, checked again at approval                   |
+
+The two resources share one switch, "resources". The exact input and output schemas are the zod
+definitions in `server/src/mcp/tools/schemas.ts` (read tools) and `server/src/mcp/tools/act.ts`
+(act tools); an MCP client sees them as JSON Schema in `tools/list`.
+
 ## Read tools
 
 | Tool             | Input                                                | Returns                                                                                           |

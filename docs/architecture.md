@@ -114,11 +114,37 @@ Attendance maths, with `a` attended out of `h` held and minimum `m` (0.75):
   agent driving the student's logged-in dashboard could click Approve. Future mitigation: re-enter
   the passcode before sending email.
 
+## Communication flow
+
+```mermaid
+sequenceDiagram
+  participant AI as AI host (Claude)
+  participant MCP as /mcp
+  participant DB as SQLite
+  participant UI as Dashboard
+  participant API as /api
+  AI->>MCP: tools/call create_reminder (Bearer token)
+  MCP->>DB: ability on? insert pending action, log "proposed"
+  MCP-->>AI: { status: "pending", actionId, preview }
+  UI->>API: GET /api/approvals (session cookie, every 5 s)
+  API-->>UI: pending card, header announces "1 new approval"
+  UI->>API: POST /api/approvals/:id/approve (after confirmation)
+  API->>DB: pending → approved (atomic), ability re-checked, run, done
+  API-->>UI: { status: "done" }
+  AI->>MCP: get_today
+  MCP-->>AI: pending list now shows "done"
+```
+
+- The dashboard calls `/api` on its own origin (no CORS, no hard-coded URL).
+- Each MCP request gets a fresh stateless server instance; there are no MCP sessions to lose.
+- An approved reminder is also offered to Google Calendar when connected; the approval answers
+  within 2 s even if Google does not, and the result is added as a note.
+
 ## Data model (SQLite, 12 tables)
 
 `settings`, `subjects`, `classes`, `attendance`, `deadlines`, `notices`, `reminders`, `outbox`,
 `pending_actions`, `activity`, `abilities`, `integrations` (encrypted Google token). All access goes
-through `server/src/data/store.ts`.
+through `server/src/data/store.ts`. Columns, rules, migrations and backups: [database.md](database.md).
 
 ## Assumptions to confirm
 

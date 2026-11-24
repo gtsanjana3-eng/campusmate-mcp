@@ -25,6 +25,20 @@ npm run check   # lint, format check, type checks, all tests, production build
 5. When the deploy is live, open `https://<service>.onrender.com`, log in, and open **Connect**. It
    shows the MCP URL and token to paste into Claude.
 
+**If the first deploy fails with `DASHBOARD_PASSCODE: Invalid input`**, the passcode was left empty
+at step 3 (this happened on the first live deploy). Open the service → **Environment** → **Edit** →
+**Add variable** `DASHBOARD_PASSCODE`, type a value or click **Generate**, then **Save, rebuild, and
+deploy**. A generated value is long: reveal and copy it with the eye icon on the same page.
+
+### Current deployment
+
+| Item     | Value                                                                |
+| -------- | -------------------------------------------------------------------- |
+| Live URL | https://campusmate-ulnc.onrender.com                                 |
+| Service  | Render web service `campusmate`, free plan, Singapore                |
+| Source   | `gtsanjana3-eng/campusmate-mcp`, branch `main`; auto-deploys on push |
+| Secrets  | Stored only in Render's Environment page, never in the repo          |
+
 `PUBLIC_URL` does not need to be set on Render: the server uses Render's `RENDER_EXTERNAL_URL`. If
 you use your own domain, set `PUBLIC_URL` to it (an explicit value always wins). The MCP endpoint
 only accepts requests whose Host matches it.
