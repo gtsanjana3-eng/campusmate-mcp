@@ -317,3 +317,13 @@ describe('resources and prompts', () => {
     expect(JSON.stringify(prompt.messages)).toContain('not sent until I approve it');
   });
 });
+
+describe('every prompt', () => {
+  it('builds the morning brief and weekly plan prompts around the right tools', async () => {
+    const brief = await client.getPrompt({ name: 'morning_brief' });
+    expect(JSON.stringify(brief.messages)).toContain('get_today');
+    const plan = await client.getPrompt({ name: 'weekly_plan' });
+    expect(JSON.stringify(plan.messages)).toContain('plan_week');
+    expect(JSON.stringify(plan.messages)).toContain('needs my approval');
+  });
+});
