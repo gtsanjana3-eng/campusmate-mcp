@@ -31,3 +31,7 @@
   font-size: var(--text-sm);
   color: var(--color-text-muted);
 }
+
+.extra {
+  margin-top: var(--space-12);
+}

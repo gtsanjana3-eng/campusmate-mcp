@@ -1,4 +1,4 @@
--- CampusMate schema (11 tables). Applied with CREATE IF NOT EXISTS on every start.
+-- CampusMate schema (12 tables). Applied with CREATE IF NOT EXISTS on every start.
 
 CREATE TABLE IF NOT EXISTS settings (
   key   TEXT PRIMARY KEY,
@@ -97,3 +97,14 @@ CREATE TABLE IF NOT EXISTS abilities (
 CREATE INDEX IF NOT EXISTS idx_deadlines_due ON deadlines(due_at);
 CREATE INDEX IF NOT EXISTS idx_pending_status ON pending_actions(status, created_at);
 CREATE INDEX IF NOT EXISTS idx_activity_at ON activity(at);
+
+-- Optional external connections (only Google Calendar today). The refresh token is stored
+-- encrypted (AES-256-GCM, see lib/secretBox.ts); access tokens are kept in memory only.
+CREATE TABLE IF NOT EXISTS integrations (
+  provider          TEXT PRIMARY KEY CHECK (provider IN ('google_calendar')),
+  refresh_token_enc TEXT NOT NULL,
+  calendar_id       TEXT NOT NULL,
+  status            TEXT NOT NULL CHECK (status IN ('connected', 'needs_reconnect')),
+  connected_at      TEXT NOT NULL,
+  updated_at        TEXT NOT NULL
+);

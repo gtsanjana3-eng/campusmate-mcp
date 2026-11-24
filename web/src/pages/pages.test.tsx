@@ -256,3 +256,32 @@ describe('Permissions page', () => {
     expect(toggle).toHaveAttribute('aria-checked', 'true');
   });
 });
+
+describe('Approvals page with Google Calendar', () => {
+  it('shows what the server reports about Google Calendar after approving a reminder', async () => {
+    const reminder = fixtures.emailAction({
+      summary: 'Reminder “Submit the OS lab record” at Fri, 27 Nov, 18:00',
+      preview: {
+        tool: 'create_reminder',
+        reminder: { text: 'Submit the OS lab record', remindAt: '2026-11-27T18:00:00+05:30' },
+      },
+    });
+    api({
+      'GET /api/approvals': () => Response.json({ actions: [reminder] }),
+      'POST /api/approvals/act-1/approve': () =>
+        Response.json({
+          action: {
+            ...reminder,
+            status: 'done',
+            note: 'Saved in CampusMate, but not added to Google Calendar: access expired or was removed. Reconnect it on the Connect page.',
+          },
+        }),
+    });
+    renderAt('/approvals');
+    await userEvent.click(await screen.findByRole('button', { name: /^Approve:/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Yes, approve' }));
+    expect(
+      await screen.findByText(/not added to Google Calendar: access expired/),
+    ).toBeInTheDocument();
+  });
+});

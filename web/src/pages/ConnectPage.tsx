@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { CalendarCard } from '@/components/sections/CalendarCard';
 import { CopyField } from '@/components/ui/CopyField';
 import { StatusMessage } from '@/components/ui/StatusMessage';
 import { useAsync } from '@/hooks/useAsync';
@@ -62,6 +63,10 @@ export default function ConnectPage() {
           </li>
         </ol>
       )}
+
+      <div className={styles.extra}>
+        <CalendarCard />
+      </div>
     </div>
   );
 }

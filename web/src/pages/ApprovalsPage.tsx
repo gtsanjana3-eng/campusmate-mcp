@@ -30,9 +30,11 @@ const failureText = (error: unknown) =>
 function outcomeText(action: PendingAction): string {
   switch (action.status) {
     case 'done':
-      return action.preview.tool === 'draft_faculty_email'
-        ? `Done: ${action.summary}. Delivered to the CampusMate demo outbox.`
-        : `Done: ${action.summary}.`;
+      if (action.preview.tool === 'draft_faculty_email') {
+        return `Done: ${action.summary}. Delivered to the CampusMate demo outbox.`;
+      }
+      // e.g. whether a reminder also reached Google Calendar, as reported by the server.
+      return `Done: ${action.summary}.${action.note ? ` ${action.note}` : ''}`;
     case 'failed':
       return `Couldn't complete: ${action.summary}. ${action.error ?? ''}`.trim();
     default:

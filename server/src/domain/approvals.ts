@@ -43,6 +43,7 @@ function toPendingAction(record: PendingActionRecord): PendingAction {
     expiresAt: new Date(Date.parse(record.createdAt) + EXPIRY_MS).toISOString(),
     ...(record.decidedAt ? { decidedAt: record.decidedAt } : {}),
     ...(typeof error === 'string' ? { error } : {}),
+    ...(typeof record.result?.note === 'string' ? { note: record.result.note } : {}),
   };
 }
 
@@ -88,6 +89,10 @@ export function pendingSummary(store: Store, since: Date, now: Date): PendingSum
     status: record.status,
     summary: describe(record.preview),
   }));
+}
+
+export function getAction(store: Store, id: string): PendingAction {
+  return toPendingAction(getOrThrow(store, id));
 }
 
 function getOrThrow(store: Store, id: string): PendingActionRecord {

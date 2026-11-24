@@ -32,6 +32,8 @@ describe('logged out', () => {
         return new Response(null, { status: 204 });
       },
       'GET /api/connect': () => Response.json(connectInfo),
+      'GET /api/integrations': () =>
+        Response.json({ integrations: [{ provider: 'google_calendar', state: 'not_configured' }] }),
     });
 
     const router = renderAt('/connect');
@@ -76,6 +78,8 @@ const loggedInApi = () =>
   mockApi({
     'GET /api/session': () => Response.json({ authenticated: true }),
     'GET /api/connect': () => Response.json(connectInfo),
+    'GET /api/integrations': () =>
+      Response.json({ integrations: [{ provider: 'google_calendar', state: 'not_configured' }] }),
     'DELETE /api/session': () => new Response(null, { status: 204 }),
   });
 

@@ -108,10 +108,11 @@ Attendance maths, with `a` attended out of `h` held and minimum `m` (0.75):
   agent driving the student's logged-in dashboard could click Approve. Future mitigation: re-enter
   the passcode before sending email.
 
-## Data model (SQLite, 11 tables)
+## Data model (SQLite, 12 tables)
 
 `settings`, `subjects`, `classes`, `attendance`, `deadlines`, `notices`, `reminders`, `outbox`,
-`pending_actions`, `activity`, `abilities`. All access goes through `server/src/data/store.ts`.
+`pending_actions`, `activity`, `abilities`, `integrations` (encrypted Google token). All access goes
+through `server/src/data/store.ts`.
 
 ## Assumptions to confirm
 

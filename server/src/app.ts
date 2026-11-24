@@ -9,8 +9,11 @@ import { bearerAuth } from './auth/bearer.ts';
 import type { Env } from './config/env.ts';
 import type { Store } from './data/store.ts';
 import { AppError } from './domain/errors.ts';
+import { createCalendarIntegration } from './domain/integrations.ts';
 import { log } from './lib/logger.ts';
+import { createSecretBox } from './lib/secretBox.ts';
 import { createMcpServer } from './mcp/createServer.ts';
+import { createGoogleClient } from './sources/google/googleClient.ts';
 import { createDemoOutbox, type Mailer } from './sources/mailer.ts';
 
 type AppOptions = {
@@ -19,6 +22,8 @@ type AppOptions = {
   mailer?: Mailer;
   /** Clock, injectable for tests. */
   now?: () => Date;
+  /** fetch used for Google calls; tests pass a simulated Google. */
+  googleFetch?: typeof fetch;
   /** Folder with the built dashboard, relative to the process working directory. Omit in tests. */
   webDist?: string;
 };
@@ -29,6 +34,22 @@ export function createApp(env: Env, options: AppOptions) {
   const { store } = options;
   const now = options.now ?? (() => new Date());
   const mailer = options.mailer ?? createDemoOutbox(store);
+  // Google Calendar is only enabled when the server has its own OAuth credentials.
+  const google =
+    env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+      ? createGoogleClient({
+          clientId: env.GOOGLE_CLIENT_ID,
+          clientSecret: env.GOOGLE_CLIENT_SECRET,
+          redirectUri: `${env.PUBLIC_URL.replace(/\/+$/, '')}/api/integrations/google/callback`,
+          ...(options.googleFetch ? { fetch: options.googleFetch, sleep: async () => {} } : {}),
+        })
+      : undefined;
+  const calendar = createCalendarIntegration({
+    store,
+    box: createSecretBox(env.SESSION_SECRET),
+    ...(google ? { google } : {}),
+    now,
+  });
   const app = new Hono();
 
   app.use(
@@ -57,7 +78,7 @@ export function createApp(env: Env, options: AppOptions) {
   app.route('/mcp', mcp);
 
   // --- REST API: only the dashboard talks to this, with the session cookie ---
-  app.route('/api', createApiRoutes(env, { store, mailer, now }));
+  app.route('/api', createApiRoutes(env, { store, mailer, calendar, now }));
   app.all('/api/*', (c) => c.json(apiError('not_found', 'No such API route.'), 404));
 
   // --- Dashboard: static files with SPA fallback ---

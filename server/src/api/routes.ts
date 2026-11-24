@@ -22,10 +22,18 @@ import type { Store } from '../data/store.ts';
 import { listAbilities, setAbility } from '../domain/abilities.ts';
 import { attendanceMinimum, getAttendance, getToday } from '../domain/academic.ts';
 import { listActivity } from '../domain/activity.ts';
-import { approveAction, editEmailDraft, listActions, rejectAction } from '../domain/approvals.ts';
+import {
+  approveAction,
+  editEmailDraft,
+  getAction,
+  listActions,
+  rejectAction,
+} from '../domain/approvals.ts';
+import type { CalendarIntegration } from '../domain/integrations.ts';
 import { unauthorized, validationError } from '../domain/errors.ts';
 import { log } from '../lib/logger.ts';
 import type { Mailer } from '../sources/mailer.ts';
+import { createIntegrationRoutes } from './integrations.ts';
 import { readJson } from './validate.ts';
 
 const SessionBody = z.object({ passcode: z.string().min(1).max(200) });
@@ -40,10 +48,10 @@ const STATUSES = ['pending', 'approved', 'done', 'rejected', 'failed', 'expired'
 
 export const TEST_PROMPT = 'What do I have today, and is my attendance safe in every subject?';
 
-type ApiDeps = { store: Store; mailer: Mailer; now: () => Date };
+type ApiDeps = { store: Store; mailer: Mailer; calendar: CalendarIntegration; now: () => Date };
 
 /** REST API for the dashboard. Mounted at /api. */
-export function createApiRoutes(env: Env, { store, mailer, now }: ApiDeps) {
+export function createApiRoutes(env: Env, { store, mailer, calendar, now }: ApiDeps) {
   const api = new Hono();
   const session = requireSession(env.SESSION_SECRET);
 
@@ -127,12 +135,18 @@ export function createApiRoutes(env: Env, { store, mailer, now }: ApiDeps) {
 
   api.post('/approvals/:id/approve', session, async (c) => {
     await readJson(c, DecisionBody);
-    const action = approveAction(store, c.req.param('id'), { mailer, now: now() });
+    const id = c.req.param('id');
+    let action = approveAction(store, id, { mailer, now: now() });
     log.info('approval.decided', {
       decision: 'approve',
       tool: action.preview.tool,
       status: action.status,
     });
+    // A saved reminder is also offered to Google Calendar; the result is recorded as a note.
+    if (action.status === 'done' && action.preview.tool === 'create_reminder') {
+      await calendar.syncApprovedReminder(id, action.preview.reminder);
+      action = getAction(store, id);
+    }
     return c.json<ActionResponse>({ action });
   });
 
@@ -150,6 +164,8 @@ export function createApiRoutes(env: Env, { store, mailer, now }: ApiDeps) {
       testPrompt: TEST_PROMPT,
     }),
   );
+
+  api.route('/integrations', createIntegrationRoutes(calendar, session));
 
   return api;
 }

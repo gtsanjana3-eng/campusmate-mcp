@@ -31,6 +31,15 @@ export type AttendanceRecord = {
   held: number;
 };
 
+export type IntegrationRecord = {
+  provider: 'google_calendar';
+  /** Encrypted with lib/secretBox; never stored in plain text. */
+  refreshTokenEnc: string;
+  calendarId: string;
+  status: 'connected' | 'needs_reconnect';
+  connectedAt: string;
+};
+
 export type PendingActionRecord = {
   id: string;
   tool: ToolName;
@@ -165,6 +174,58 @@ export function createStore(path: string) {
 
     pruneActivityBefore(cutoff: string): number {
       return Number(db.prepare('DELETE FROM activity WHERE at < ?').run(cutoff).changes);
+    },
+
+    // ---------- External integrations ----------
+
+    getIntegration(provider: 'google_calendar'): IntegrationRecord | undefined {
+      return db
+        .prepare(
+          `SELECT provider, refresh_token_enc AS refreshTokenEnc, calendar_id AS calendarId, status,
+                  connected_at AS connectedAt
+           FROM integrations WHERE provider = ?`,
+        )
+        .get(provider) as IntegrationRecord | undefined;
+    },
+
+    saveIntegration(record: IntegrationRecord, now: string): void {
+      db.prepare(
+        `INSERT INTO integrations (provider, refresh_token_enc, calendar_id, status, connected_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(provider) DO UPDATE SET refresh_token_enc = excluded.refresh_token_enc,
+           calendar_id = excluded.calendar_id, status = excluded.status,
+           connected_at = excluded.connected_at, updated_at = excluded.updated_at`,
+      ).run(
+        record.provider,
+        record.refreshTokenEnc,
+        record.calendarId,
+        record.status,
+        record.connectedAt,
+        now,
+      );
+    },
+
+    setIntegrationStatus(
+      provider: 'google_calendar',
+      status: IntegrationRecord['status'],
+      now: string,
+    ) {
+      db.prepare('UPDATE integrations SET status = ?, updated_at = ? WHERE provider = ?').run(
+        status,
+        now,
+        provider,
+      );
+    },
+
+    deleteIntegration(provider: 'google_calendar'): void {
+      db.prepare('DELETE FROM integrations WHERE provider = ?').run(provider);
+    },
+
+    /** Adds a follow-up note (e.g. the Google Calendar result) to a finished action. */
+    addActionNote(id: string, note: string): void {
+      db.prepare(
+        "UPDATE pending_actions SET result = json_set(COALESCE(result, '{}'), '$.note', ?) WHERE id = ?",
+      ).run(note, id);
     },
 
     listActivity(limit: number): ActivityEntry[] {

@@ -117,6 +117,8 @@ export interface PendingAction {
   decidedAt?: string;
   /** Failure explanation when status is 'failed'. */
   error?: string;
+  /** Follow-up result, e.g. whether an approved reminder was also added to Google Calendar. */
+  note?: string;
 }
 
 /** Short form used by get_today and the header badge (fix F3). */
@@ -220,6 +222,25 @@ export interface ConnectResponse {
   mcpUrl: string;
   token: string;
   testPrompt: string;
+}
+
+/**
+ * External connection status. not_configured: this server has no Google credentials;
+ * needs_reconnect: access expired or was revoked.
+ */
+export interface IntegrationStatus {
+  provider: 'google_calendar';
+  state: 'not_configured' | 'disconnected' | 'connected' | 'needs_reconnect';
+  connectedAt?: string;
+}
+
+export interface IntegrationsResponse {
+  integrations: IntegrationStatus[];
+}
+
+export interface ConnectIntegrationResponse {
+  /** Google consent page to open in the same tab. */
+  authUrl: string;
 }
 
 // ---------- MCP tool structured outputs ----------

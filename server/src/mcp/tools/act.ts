@@ -181,7 +181,7 @@ export function registerActTools(server: McpServer, deps: ToolDeps): void {
       title: 'Create a reminder',
       description:
         'Proposes a reminder at a specific time, optionally linked to a deadline (use its id from list_deadlines). ' +
-        `Reminders are stored in CampusMate. Resolve relative times from get_today.now. ${ASK_FIRST} ${APPROVAL_NOTE}`,
+        `Approved reminders are saved in CampusMate and, if the student connected Google Calendar, also added to a 'CampusMate' calendar there; the result is in get_today. Resolve relative times from get_today.now. ${ASK_FIRST} ${APPROVAL_NOTE}`,
       inputSchema: z.object({
         text: z.string().trim().min(3).max(140),
         remindAt: isoDateTime.describe('When to remind, ISO 8601 with offset.'),

@@ -28,7 +28,8 @@ Example: _"Can I skip OS tomorrow?"_ → _"You're at 77%. You can miss 1 more cl
 75%."_ The number comes from code, not from the model.
 
 See [docs/architecture.md](docs/architecture.md) for the full design and
-[docs/ai-workflows.md](docs/ai-workflows.md) for how the AI assistant uses CampusMate.
+[docs/ai-workflows.md](docs/ai-workflows.md) for how the AI assistant uses CampusMate, and
+[docs/integrations.md](docs/integrations.md) for Google Calendar and what is demo data.
 
 ## Repository layout
 
