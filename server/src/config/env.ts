@@ -51,7 +51,9 @@ export type Env = z.infer<typeof EnvSchema>;
  * Error messages name the variables but never print their values.
  */
 export function parseEnv(source: Record<string, string | undefined> = process.env): Env {
-  const result = EnvSchema.safeParse(source);
+  // On Render, PUBLIC_URL can be left unset: the platform provides the service's own https URL.
+  const publicUrl = source.PUBLIC_URL || source.RENDER_EXTERNAL_URL;
+  const result = EnvSchema.safeParse({ ...source, PUBLIC_URL: publicUrl });
   if (!result.success) {
     const problems = result.error.issues.map(
       (issue) => `- ${issue.path.join('.')}: ${issue.message}`,

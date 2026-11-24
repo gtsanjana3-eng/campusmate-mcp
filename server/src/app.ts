@@ -100,7 +100,21 @@ export function createApp(env: Env, options: AppOptions) {
 
   // --- Dashboard: static files with SPA fallback ---
   if (options.webDist) {
+    // Built files under /assets have a content hash in their name, so they never change: cache for a year.
+    // Everything else (index.html) is revalidated, so a new deploy shows up straight away.
+    // (Set after the response is built: serveStatic's onFound runs too late to add headers.)
+    app.use('/*', async (c, next) => {
+      await next();
+      const isAppRoute = c.req.path.startsWith('/api') || c.req.path.startsWith('/mcp');
+      if (isAppRoute || !c.res.ok) return;
+      c.res.headers.set(
+        'Cache-Control',
+        c.req.path.startsWith('/assets/') ? 'public, max-age=31536000, immutable' : 'no-cache',
+      );
+    });
     app.use('/*', serveStatic({ root: options.webDist }));
+    // A missing asset (e.g. from an old deploy) is a 404, never the page under a year-long cache.
+    app.get('/assets/*', (c) => c.notFound());
     app.get('*', serveStatic({ root: options.webDist, path: 'index.html' }));
   }
 

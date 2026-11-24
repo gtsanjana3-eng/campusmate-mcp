@@ -6,7 +6,7 @@ Run everything with `npm run check`; coverage with `npm run test:coverage`.
 
 | Suite                                        | Files            | Tests | What it covers                                                                                                                      |
 | -------------------------------------------- | ---------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Server unit + integration                    | 16               | 179   | Domain rules, store, auth, API routes, all 10 MCP tools, resources, prompts, approvals, Google Calendar (simulated), security fixes |
+| Server unit + integration                    | 16               | 181   | Domain rules, store, auth, API routes, all 10 MCP tools, resources, prompts, approvals, Google Calendar (simulated), security fixes |
 | Server end-to-end (`server/src/e2e.test.ts`) | (included above) | 8     | Real HTTP server + official MCP client + dashboard HTTP calls: journeys J0–J6                                                       |
 | Web (`web/src`)                              | 7                | 51    | Every page, confirm/cancel/edit, success only on server "done", errors, session expiry, lockout message, Calendar card, components  |
 | Lint, format, type checks, build             | —                | —     | `npm run check`, both workspaces                                                                                                    |

@@ -1,0 +1,30 @@
+# Render Blueprint: one free web service serves the dashboard, /api and /mcp.
+# See docs/deployment.md. No secret values live in this file.
+services:
+  - type: web
+    name: campusmate
+    runtime: node # version comes from .nvmrc (24)
+    plan: free
+    region: singapore
+    # devDependencies are needed for the dashboard build (Render sets NODE_ENV=production only at runtime).
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      # Bearer token for the AI connector and the cookie-signing secret: random 256-bit values.
+      - key: MCP_TOKEN
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      # The student's dashboard passcode: typed in by you when the Blueprint is created.
+      - key: DASHBOARD_PASSCODE
+        sync: false
+      # Free services have no persistent disk: the demo database is re-seeded on every restart.
+      - key: DATABASE_PATH
+        value: ./data/campusmate.db
+      # PUBLIC_URL is left out on purpose: the server uses Render's RENDER_EXTERNAL_URL.
+      # Optional Google Calendar (docs/integrations.md): set both in the dashboard, or neither.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false

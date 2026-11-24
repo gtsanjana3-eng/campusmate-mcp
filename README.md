@@ -64,6 +64,8 @@ Never commit `.env`. The server refuses to start if a secret is missing or too s
 The server runs its TypeScript sources directly on Node 24, so it has no build step; `tsc` only
 type-checks.
 
+**Deploying:** see [docs/deployment.md](docs/deployment.md) (Render Blueprint in `render.yaml`).
+
 ## Roadmap
 
 | Stage | Goal                                          | Status              |
@@ -71,7 +73,7 @@ type-checks.
 | A     | Repo, API contract, architecture docs, pitch  | Done                |
 | B     | Read tools working via MCP                    | Done (local)        |
 | C     | Approval loop and dashboard                   | Done (local)        |
-| D     | Deployed, tested, documented                  | Planned             |
+| D     | Deployed, tested, documented                  | Ready to deploy     |
 | E     | Undo, MCP Apps approval card, Google Calendar | Planned (build day) |
 
 ## Honest scope
