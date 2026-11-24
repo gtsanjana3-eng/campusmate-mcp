@@ -22,6 +22,10 @@ services:
       # Free services have no persistent disk: the demo database is re-seeded on every restart.
       - key: DATABASE_PATH
         value: ./data/campusmate.db
+      # Render's load balancer adds the visitor's address to X-Forwarded-For, so the login lockout
+      # counts per visitor instead of locking everyone out (docs/deployment.md).
+      - key: TRUST_PROXY_HOPS
+        value: '1'
       # PUBLIC_URL is left out on purpose: the server uses Render's RENDER_EXTERNAL_URL.
       # Optional Google Calendar (docs/integrations.md): set both in the dashboard, or neither.
       - key: GOOGLE_CLIENT_ID

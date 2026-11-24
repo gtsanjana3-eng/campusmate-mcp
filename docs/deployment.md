@@ -54,6 +54,7 @@ only accepts requests whose Host matches it.
 | `PUBLIC_URL`                              | no (Render) | Render's `RENDER_EXTERNAL_URL` | Set it only for a custom domain                                    |
 | `PORT`                                    | no          | Render (10000)                 | The server listens on `0.0.0.0:$PORT`                              |
 | `GOOGLE_CLIENT_ID` `GOOGLE_CLIENT_SECRET` | no          | You                            | Both or neither; callback `<url>/api/integrations/google/callback` |
+| `TRUST_PROXY_HOPS`                        | no          | `render.yaml` (1)              | Proxies that append to X-Forwarded-For; 0 when reached directly    |
 
 The server refuses to start if a secret is missing, short, repetitive or still a placeholder, and
 the error names the variable without printing its value. No secret is stored in the repository.
@@ -78,14 +79,30 @@ referrer policy), login cookie `HttpOnly; Secure; SameSite=Strict`, MCP `tools/l
 
 ## Known limits to check after the first deploy
 
-- **Login lockout behind Render's proxy.** The limiter counts failures per connection address.
-  Render's documentation does not say which address the app sees; if every visitor arrives from
-  the proxy, five wrong passcodes from anyone lock **everyone** out for 15 minutes (the right
-  passcode still can't get in during that time). Forwarded-for headers are not trusted, because
-  they can be faked. Check this on the live URL before the demo, and share the passcode only with
-  the people who need it.
+- **Login lockout behind Render's proxy.** Every visitor reaches the app through Render's load
+  balancer, so the connection address alone would make five wrong passcodes from anyone lock
+  **everyone** out. With `TRUST_PROXY_HOPS=1` the limiter counts the last `X-Forwarded-For` entry,
+  the one Render adds; entries a visitor adds themselves sit further left and are ignored. To check
+  it, send one wrong passcode and read the `auth.login_failed` line in Render's logs: it records
+  `socketIsPrivate` and `forwardedEntries` (never an address). Expected: `socketIsPrivate: true`
+  and one more entry than the request sent. If not, set `TRUST_PROXY_HOPS` to `0`.
 - **Live test inside Claude** and **real Google Calendar** still need the deployed URL; follow
   `docs/ai-workflows.md` and `docs/integrations.md`.
+
+## Demo-day checklist (free plan)
+
+1. **Do not push to `main` in the hour before a demo.** Every push redeploys, which restarts the
+   service with fresh demo data and logs everyone out.
+2. **Wake it 5 minutes early:** open the site (first request takes about a minute), log in, and
+   keep the tab open. Any request in the last 15 minutes keeps it awake.
+3. **Start from a clean state:** after waking, the data is the fresh demo student, so there are
+   no stale approvals. Ask the AI for something new rather than referring to proposals from an
+   earlier session: after a restart those no longer exist.
+4. **Keep the passcode in a password manager** and share it only with the people presenting.
+5. **Have a fallback:** the local setup (`npm run build && npm start`) runs the same app on a
+   laptop if the network or Render is down.
+
+A paid Render instance (no sleep) with a persistent disk removes points 2 and 3.
 
 ## Rollback
 

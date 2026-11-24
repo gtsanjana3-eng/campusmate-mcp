@@ -19,8 +19,9 @@ wHACKiest 2026 · Track 1: **Make MCP Matter**
 
 ## Problem statement
 
-The hackathon track was given only as **"Make MCP Matter"**: build something with the Model
-Context Protocol that makes a real difference. Our interpretation, for students:
+**Track 1, "Make MCP Matter"** (wHACKiest 2026): _"Build an MCP-powered solution a regular person
+would actually use every day"_, with useful, reliable and **controlled** interactions with the
+apps and tools people already rely on. Our interpretation, for students:
 
 A student's day is spread across the college portal (attendance), WhatsApp groups (notices),
 Google Classroom (assignments), email (faculty) and a timetable photo. Deadlines get missed,
@@ -149,9 +150,10 @@ instructions, free-plan limits and rollback: [docs/deployment.md](docs/deploymen
 
 - **Demo data only:** one seeded student; emails go to a demo outbox, never a real inbox.
 - **Free hosting:** the live instance sleeps after 15 minutes idle and starts from fresh demo data
-  on every restart (no persistent disk).
-- **Login lockout behind Render's proxy** has not been verified: if all visitors share one
-  address, five wrong passcodes from anyone pause logins for everyone for 15 minutes.
+  on every restart (no persistent disk). See the demo-day checklist in
+  [docs/deployment.md](docs/deployment.md#demo-day-checklist-free-plan).
+- **Login lockout behind Render's proxy** counts per visitor using the address Render adds
+  (`TRUST_PROXY_HOPS=1`); see [docs/deployment.md](docs/deployment.md) for how it was checked.
 - **Google Calendar** is tested only against a simulated Google; it is off on the live demo.
 - **Not yet verified live:** a session inside Claude and the logged-in dashboard journeys.
 

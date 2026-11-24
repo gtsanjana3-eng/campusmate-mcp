@@ -64,13 +64,41 @@ type ApiDeps = {
   limiter?: LoginLimiter;
 };
 
-/** The connecting address; tests (no socket) share one key. */
-function clientAddress(c: Context): string {
+/**
+ * The address the login limiter counts failures against. Behind `trustedHops` proxies, it is the
+ * X-Forwarded-For entry added by the outermost trusted proxy (counted from the right), because
+ * entries further left are supplied by the client and can be faked. Tests (no socket) share one key.
+ */
+export function clientAddress(c: Context, trustedHops = 0): string {
+  if (trustedHops > 0) {
+    const forwarded = (c.req.header('x-forwarded-for') ?? '')
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+    const fromProxy = forwarded[forwarded.length - trustedHops];
+    if (fromProxy) return fromProxy;
+  }
   try {
     return getConnInfo(c).remote.address ?? 'unknown';
   } catch {
     return 'unknown';
   }
+}
+
+/** Privacy-safe facts about how a login request arrived (no addresses), to check proxy settings. */
+function arrivalFacts(c: Context) {
+  let socketIsPrivate: boolean | 'unknown' = 'unknown';
+  try {
+    const address = getConnInfo(c).remote.address ?? '';
+    socketIsPrivate =
+      /^(10\.|127\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::1$|fc|fd|::ffff:(10|127|192\.168)\.)/i.test(
+        address,
+      );
+  } catch {
+    // no socket in tests
+  }
+  const forwarded = c.req.header('x-forwarded-for');
+  return { socketIsPrivate, forwardedEntries: forwarded ? forwarded.split(',').length : 0 };
 }
 
 /** REST API for the dashboard. Mounted at /api. */
@@ -93,7 +121,7 @@ export function createApiRoutes(
   );
 
   api.post('/session', async (c) => {
-    const client = clientAddress(c);
+    const client = clientAddress(c, env.TRUST_PROXY_HOPS);
     // Checked before the passcode, so a locked-out client learns nothing, even with the right one.
     const wait = limiter.retryAfterSeconds(client);
     if (wait > 0) {
@@ -113,7 +141,7 @@ export function createApiRoutes(
     const { passcode } = await readJson(c, SessionBody);
     if (!passcodeMatches(passcode, env.DASHBOARD_PASSCODE)) {
       limiter.recordFailure(client);
-      log.info('auth.login_failed');
+      log.info('auth.login_failed', { ...arrivalFacts(c), trustedHops: env.TRUST_PROXY_HOPS });
       throw unauthorized();
     }
     limiter.recordSuccess(client);
@@ -123,7 +151,8 @@ export function createApiRoutes(
   });
 
   // Logging out ends every session on the server, so a copied cookie stops working too.
-  api.delete('/session', (c) => {
+  // It needs a valid session: otherwise anyone could log the student out at will.
+  api.delete('/session', session, (c) => {
     store.setSetting(SESSIONS_VALID_FROM, String(Date.now()));
     endSession(c);
     log.info('auth.logout');

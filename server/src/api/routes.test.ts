@@ -184,4 +184,21 @@ describe('logout (audit M3)', () => {
     const second = await login(app);
     expect((await app.request('/api/abilities', { headers: { Cookie: second } })).status).toBe(200);
   });
+
+  it('cannot be triggered by someone who is not logged in (review H1)', async () => {
+    const { app } = testApp();
+    const student = await login(app);
+    expect((await app.request('/api/session', { method: 'DELETE' })).status).toBe(401);
+    expect(
+      (
+        await app.request('/api/session', {
+          method: 'DELETE',
+          headers: { Cookie: 'cm_session=forged.value' },
+        })
+      ).status,
+    ).toBe(401);
+    expect((await app.request('/api/abilities', { headers: { Cookie: student } })).status).toBe(
+      200,
+    );
+  });
 });

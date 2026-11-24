@@ -35,6 +35,9 @@ const EnvSchema = z
     DATABASE_PATH: z.string().min(1).default('./data/campusmate.db'),
     PUBLIC_URL: z.url().default('http://localhost:8787'),
     PORT: z.coerce.number().int().min(1).max(65535).default(8787),
+    // How many trusted proxies (e.g. Render's load balancer) append to X-Forwarded-For. 0 = use the
+    // socket address. Never set this without such a proxy: the header is then client-controlled.
+    TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
     // Optional: Google Calendar for approved reminders. Leave both empty to keep reminders in CampusMate only.
     GOOGLE_CLIENT_ID: optionalText,
     GOOGLE_CLIENT_SECRET: optionalText,
