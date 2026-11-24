@@ -82,16 +82,16 @@ because no logged-in session could be driven from the testing environment.
 
 ## Known limitations and future improvements
 
-| Item                                                 | Status / next step                                                                                                               |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Live test inside Claude                              | Add the connector with the Connect page's URL and token, then run `docs/ai-workflows.md`                                         |
-| Google Calendar against real Google                  | Needs OAuth credentials (`docs/integrations.md`); off on the live demo                                                           |
-| Login lockout behind Render's proxy                  | Phase 21: counts per visitor via `TRUST_PROXY_HOPS=1` (tests cover spoofed entries); live log check in `docs/deployment.md`      |
-| Free hosting                                         | Sleeps after 15 min; data resets on every restart. Demo-day checklist in `docs/deployment.md`; paid instance + disk for real use |
-| Unauthenticated logout (review H1)                   | Phase 21: fixed; logout now needs a valid session (test added)                                                                   |
-| Wrong-passcode message                               | Says "Please log in again."; a clearer "Wrong passcode" would help                                                               |
-| Audit Low findings (Phase 13 L1–L8, Phase 15 L1–L10) | Not approved for fixing (e.g. health 500 vs 503, polling load, Escape focus)                                                     |
-| Browser end-to-end automation (Playwright)           | Not added; HTTP-level E2E is automated, browser journeys were checked manually                                                   |
-| Lighthouse / axe                                     | Not run; contrast, labels, landmarks and target sizes were scripted checks                                                       |
-| Real college data, real email, multiple students     | Out of hackathon scope; plug in behind `server/src/sources/`                                                                     |
-| Re-enter passcode before sending email               | Planned mitigation for a browser agent driving a logged-in dashboard                                                             |
+| Item                                                 | Status / next step                                                                                                                                             |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live test inside Claude                              | Add the connector with the Connect page's URL and token, then run `docs/ai-workflows.md`                                                                       |
+| Google Calendar against real Google                  | Needs OAuth credentials (`docs/integrations.md`); off on the live demo                                                                                         |
+| Login lockout behind Render's proxy                  | Phase 21: `TRUST_PROXY_HOPS` added and tested; live check found 3 proxy entries, so per-visitor counting on Render is not yet confirmed (`docs/deployment.md`) |
+| Free hosting                                         | Sleeps after 15 min; data resets on every restart. Demo-day checklist in `docs/deployment.md`; paid instance + disk for real use                               |
+| Unauthenticated logout (review H1)                   | Phase 21: fixed; logout now needs a valid session (test added)                                                                                                 |
+| Wrong-passcode message                               | Says "Please log in again."; a clearer "Wrong passcode" would help                                                                                             |
+| Audit Low findings (Phase 13 L1–L8, Phase 15 L1–L10) | Not approved for fixing (e.g. health 500 vs 503, polling load, Escape focus)                                                                                   |
+| Browser end-to-end automation (Playwright)           | Not added; HTTP-level E2E is automated, browser journeys were checked manually                                                                                 |
+| Lighthouse / axe                                     | Not run; contrast, labels, landmarks and target sizes were scripted checks                                                                                     |
+| Real college data, real email, multiple students     | Out of hackathon scope; plug in behind `server/src/sources/`                                                                                                   |
+| Re-enter passcode before sending email               | Planned mitigation for a browser agent driving a logged-in dashboard                                                                                           |

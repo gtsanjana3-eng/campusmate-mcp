@@ -81,11 +81,14 @@ referrer policy), login cookie `HttpOnly; Secure; SameSite=Strict`, MCP `tools/l
 
 - **Login lockout behind Render's proxy.** Every visitor reaches the app through Render's load
   balancer, so the connection address alone would make five wrong passcodes from anyone lock
-  **everyone** out. With `TRUST_PROXY_HOPS=1` the limiter counts the last `X-Forwarded-For` entry,
-  the one Render adds; entries a visitor adds themselves sit further left and are ignored. To check
-  it, send one wrong passcode and read the `auth.login_failed` line in Render's logs: it records
-  `socketIsPrivate` and `forwardedEntries` (never an address). Expected: `socketIsPrivate: true`
-  and one more entry than the request sent. If not, set `TRUST_PROXY_HOPS` to `0`.
+  **everyone** out. `TRUST_PROXY_HOPS=N` makes the limiter count the N-th `X-Forwarded-For` entry
+  from the right; entries a visitor adds themselves sit further left and are ignored.
+  **Live result (Phase 21):** one wrong passcode sent with 1 forwarded entry was logged as
+  `socketIsPrivate: true, forwardedEntries: 4`, so Render's network adds **three** entries. With
+  the current value `1` the limiter counts the entry nearest the app, which is most likely a shared
+  internal proxy: no worse than before and not spoofable, but probably still shared by all
+  visitors. The visitor's own address is likely 3 from the right, but that is not yet confirmed
+  (the log records no addresses), so the value stays `1` until it is.
 - **Live test inside Claude** and **real Google Calendar** still need the deployed URL; follow
   `docs/ai-workflows.md` and `docs/integrations.md`.
 
